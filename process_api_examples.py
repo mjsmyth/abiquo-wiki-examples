@@ -26,62 +26,67 @@ def print_line(line):
 	print "Response payload: %s" % request['response_payload']  # A JSON or an XML, inspect response Content-Type header
 
 
-def pretty_print_line(output_subdir,ex_file_name,line):
+def open_if_not_existing(filename):
+    try:
+        fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except:
+        print "Ooops"
+        return None
+    fobj = os.fdopen(fd, "w")
+    return fobj
+
+
+def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 	request = yaml.load(line)
 #	request = json.loads(line)
-	print "Method: %s" % request['method'] # string
-	print "URL: %s" % request['url'] # string
-	print "Status: %s" % request['status'] # int
 	if request['status'] < 400:
-		# write the request to a file, but if there are already files, append numbers to them
-	#	out_file = open(os.path.join(output_subdir,output_file_name), 'w')
-		ex_file_dir = os.path.join(output_subdir,ex_file_name)
-		if os.path.isfile(ex_file_dir)
-		print "Request headers: %s" % request['request_headers'] # It's a JSON dictionary
+	# write the request to a file, but if there are already files, append numbers to them
+
+		ex_file_name_plus_dir = os.path.join(output_subdir,ex_file_name)
+
+		# Append an X to the list... number of X-es = number of files created!!! this is really dodgy!!!
+ 		files_dictionary.setdefault(ex_file_name_plus_dir,[]).append("X")
+ 		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) + 1
+ 		example_file_name = ex_file_name_plus_dir + number_of_files
+ 		# Check that it doesn't already exist and open the file for writing
+ 		ef = open_if_not_existing(example_file_name)
+
+ 		mets = "Method: %s" % request['method'] # string
+ 		ef.write(mets)
+		urls = "URL: %s" % request['url'] # string
+		ef.write(urls)
+		stat = "Status: %s" % request['status'] # int
+		ef.write(stat)
+		reqh = "Request headers: %s" % request['request_headers'] # It's a JSON dictionary
+		ef.write(reqh)
 		response_head = request['response_headers']
-		print "Response headers: %s" % request['response_headers'] # It's a JSON dictionary
-		print "Request payload: %s" % request['request_payload'] # A JSON or an XML, inspect request Content-Type header
+		resh = "Response headers: %s" % request['response_headers'] # It's a JSON dictionary
+		ef.write(resh)
+		reqp = "Request payload: %s" % request['request_payload'] # A JSON or an XML, inspect request Content-Type header
+		ef.write(reqp)
 	#	print "Response payload: %s" % request['response_payload']  # A JSON or an XML, inspect response Content-Type header
 		content_type_list = response_head['Content-Type']
 		if content_type_list:
 			content_type = content_type_list[0]
 			if content_type:
-				print "Response payload:"
-				print "{newcode}"
+				ef.write ("Response payload:")
+				ef.write ("{newcode}")
 				if "json" in content_type:
 					json_payload = yaml.load(request['response_payload'])
-					print json.dumps(json_payload, sort_keys=False, indent=2)
+					resp_json = json.dumps(json_payload, sort_keys=False, indent=2)
+					ef.write (resp_json)
 				if "xml" in content_type:
-					print "World!"
 					xml_payload = xml.dom.minidom.parseString(request['response_payload'])
-					print xml_payload.toprettyxml()
-				print "{newcode}"	
-
+					resp_xml = xml_payload.toprettyxml()
+					ef.write(resp_xml)
+				ef.write ("{newcode}")	
+		ef.close()		
 
 def print_summary_line(line):
 	request = json.loads(line)
 	print "Method: %s" % request['method'] # string
 	print "URL: %s" % request['url'] # string
 	print "Status: %s" % request['status'] # int
-
-
-def main():
-	output_subdir = "example_files"	
-# Load a bunch of abbreviations to replace text and shorten links
-	abbreviations = {}
-	with open("abbreviations.json.txt") as afile:
-		abbrev_file = afile.read().replace('\n', '')	
-		abbreviations = ast.literal_eval(abbrev_file)
-#	print "Abbreviation for enterprise: %s" % abbreviations["enterprise"]	
-
-	with open("requests.log") as file:
-		for line in file:
-			ex_file_name = create_file_name(line,abbreviations)
-			print "ex_file_name: %s" % ex_file_name
-#			print_summary_line(line)
-			pretty_print_line(ex_file_name,line)	
-#			ex_file = open(os.path.join(output_subdir,ex_file_name), 'w')
-
 
 
 def create_file_name(line,abbreviation):
@@ -116,6 +121,26 @@ def rep_text(text,abbreviation):
 	if "_" in text:
 		text = "TYPE"		
 	return text
+
+
+
+def main():
+	output_subdir = "example_files"	
+	files_dictionary = {}
+# Load a bunch of abbreviations to replace text and shorten links
+	abbreviations = {}
+	with open("abbreviations.json.txt") as afile:
+		abbrev_file = afile.read().replace('\n', '')	
+		abbreviations = ast.literal_eval(abbrev_file)
+#	print "Abbreviation for enterprise: %s" % abbreviations["enterprise"]	
+
+	with open("requests.log") as file:
+		for line in file:
+			ex_file_name = create_file_name(line,abbreviations)
+			print "ex_file_name: %s" % ex_file_name
+#			print_summary_line(line)
+			pretty_print_line(output_subdir,ex_file_name,line,files_dictionary)	
+#			ex_file = open(os.path.join(output_subdir,ex_file_name), 'w')	
 
 # Calls the main() function
 if __name__ == '__main__':
