@@ -47,7 +47,11 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 		# Append an X to the list... number of X-es = number of files created!!! this is really dodgy!!!
  		files_dictionary.setdefault(ex_file_name_plus_dir,[]).append("X")
  		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) + 1
- 		example_file_name = ex_file_name_plus_dir + number_of_files
+ 		example_file_name = ex_file_name_plus_dir + "." + str(number_of_files) + ".txt"
+
+ 		# Pad the integer so that the files are nicely put
+
+
  		# Check that it doesn't already exist and open the file for writing
  		ef = open_if_not_existing(example_file_name)
 
@@ -101,7 +105,7 @@ def create_file_name(line,abbreviation):
 	for ruli in raw_url_list:
 		ruli = rep_text(ruli,abbreviation)
 		rep_url_list.append(ruli)
-	example_file_name = raw_method + "_".join(rep_url_list) + ".txt"
+	example_file_name = raw_method + "_".join(rep_url_list) 
 	return example_file_name
 
 
