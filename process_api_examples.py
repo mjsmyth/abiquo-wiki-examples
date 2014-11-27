@@ -37,19 +37,19 @@ def open_if_not_existing(filename):
 
 
 def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
-	request = yaml.load(line)
-#	request = json.loads(line)
+#   request = yaml.load(line)
+	request = json.loads(line)
 	if request['status'] < 400:
-	# write the request to a file, but if there are already files, append numbers to them
+	# write the request to a file, but if there are already queries from this run, append numbers to the files
 
 		ex_file_name_plus_dir = os.path.join(output_subdir,ex_file_name)
 
 		# Append an X to the list... number of X-es = number of files created!!! this is really dodgy!!!
  		files_dictionary.setdefault(ex_file_name_plus_dir,[]).append("X")
- 		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) + 1
- 		example_file_name = ex_file_name_plus_dir + "." + str(number_of_files) + ".txt"
+ 		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) 
 
- 		# Pad the integer so that the files are nicely put
+ 		# Pad the integer so that the files are nicely named
+ 		example_file_name = ex_file_name_plus_dir + "." + "{0:04d}".format(number_of_files) + ".txt"
 
 
  		# Check that it doesn't already exist and open the file for writing
@@ -73,17 +73,20 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 		if content_type_list:
 			content_type = content_type_list[0]
 			if content_type:
-				ef.write ("Response payload:")
-				ef.write ("{newcode}")
+				ef.write ("<strong>Response payload:</strong>")
+				header = '<div class="preformatted panel" style="border-width: 1px;"><div class="preformattedContent panelContent"><pre>'
+				ef.write (header)
 				if "json" in content_type:
 					json_payload = yaml.load(request['response_payload'])
 					resp_json = json.dumps(json_payload, sort_keys=False, indent=2)
 					ef.write (resp_json)
 				if "xml" in content_type:
 					xml_payload = xml.dom.minidom.parseString(request['response_payload'])
-					resp_xml = xml_payload.toprettyxml()
+					pretty_xml = xml_payload.toprettyxml()
+					resp_xml = cgi.escape(pretty_xml).encode('ascii', 'xmlcharrefreplace')
 					ef.write(resp_xml)
-				ef.write ("{newcode}")	
+				footer = '</pre></div></div>'
+				ef.write (footer)	
 		ef.close()		
 
 def print_summary_line(line):
@@ -129,7 +132,7 @@ def rep_text(text,abbreviation):
 
 
 def main():
-	output_subdir = "example_files"	
+	output_subdir = "test_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links
 	abbreviations = {}
