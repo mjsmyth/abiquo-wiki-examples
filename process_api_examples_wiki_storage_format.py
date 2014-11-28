@@ -13,6 +13,7 @@ import ast
 import re
 import xml.dom.minidom
 import os.path
+import cgi
 
  
 def print_line(line):
@@ -102,8 +103,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 					if "xml" in content_type:
 						xml_request_payload = xml.dom.minidom.parseString(request['request_payload'])
 						pretty_xml = xml_request_payload.toprettyxml()
-#						reqp_xml = pretty_xml
-						resp_xml = cgi.escape(pretty_xml).encode('ascii', 'xmlcharrefreplace')
+						reqp_xml = cgi.escape(pretty_xml).encode('ascii', 'xmlcharrefreplace')
 						ef.write(reqp_xml)
 					ef.write (code_footer)	
 		else:
