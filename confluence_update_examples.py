@@ -63,9 +63,10 @@ def get_properties_file():
 
 def get_page(wikAuth,wikLoc,pageTitle,server):
 # returns the page
-	page = {}	
-	try:
-		page = server.confluence2.getPage(wikAuth.token, wikLoc.spaceKey, pageTitle)
+	page = {}
+	token = server.confluence2.login(wikAuth.user, wikAuth.password)	
+	try:	
+		page = server.confluence2.getPage(token, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
 		print "A fault occurred"
 		print "Fault code: %d" % err.faultCode
@@ -73,7 +74,8 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	return page		
 	
 
-def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server):
+def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId):
+	token = server.confluence2.login(wikAuth.user, wikAuth.password)
 	gotpage = get_page(wikAuth,wikLoc,pagetitle,server)
 	if gotpage:
    		# check if another user has updated the page and don't overwrite
@@ -83,21 +85,24 @@ def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server):
    			if force is True:
    			   	print "Overwriting page %s, modified by %s" % (modifier,pagetitle)
    			   	gotpage['content'] = newcontent
-   				server.confluence2.storePage(wikAuth.token, gotpage);   			   	
+   			   	token = server.confluence2.login(wikAuth.user, wikAuth.password)
+   				server.confluence2.storePage(token, gotpage) 			   	
    			else:
    				print "Not overwriting page %s, modifed by %s" % (modifier,pagetitle)  
    		else:
-   			print "Overwriting page %s" % (modifier,pagetitle)	
-   			gotpage['content'] = newcontent	 		
-   			server.confluence2.storePage(wikAuth.token, gotpage);
+   			print "Overwriting page %s" % (pagetitle)	
+   			gotpage['content'] = newcontent	
+   			token = server.confluence2.login(wikAuth.user, wikAuth.password) 		
+   			server.confluence2.storePage(token, gotpage)
    	else:
 		print "Creating new page %s" % (pagetitle)
 		newpage = {}
 		newpage['title'] = pagetitle
-		newpage['spaceKey'] = wikLoc.spaceKey
+		newpage['space'] = wikLoc.spaceKey
 		newpage['content'] = newcontent
-		newpage['parentId'] = wikLoc.parentId
-		server.confluence2.storePage(wikAuth.token, newpage);
+		newpage['parentId'] = parentId
+		token = server.confluence2.login(wikAuth.user, wikAuth.password)
+		server.confluence2.storePage(token, newpage)
    		# create a new page
 
 def get_content_file_names():
@@ -141,7 +146,7 @@ def main():
 	for idx, pagen in enumerate(pagenames):
 		ncf = open(filenames[idx],'r')	
 		newcontent = ncf.read()
-		create_update_page(auth,loc,force,pagen,newcontent,server)
+		create_update_page(auth,loc,force,pagen,newcontent,server,parentId)
 		ncf.close()
 
 

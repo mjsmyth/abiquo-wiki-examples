@@ -100,11 +100,13 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 						json_request_payload = yaml.load(request['request_payload'])
 						reqp_json = json.dumps(json_request_payload, sort_keys=False, indent=2)
 						ef.write (reqp_json)
-					if "xml" in content_type:
+					elif "xml" in content_type:
 						xml_request_payload = xml.dom.minidom.parseString(request['request_payload'])
 						pretty_xml = xml_request_payload.toprettyxml()
 						reqp_xml = cgi.escape(pretty_xml).encode('ascii', 'xmlcharrefreplace')
 						ef.write(reqp_xml)
+					else:
+						ef.write(request['request_payload'])	
 					ef.write (code_footer)	
 		else:
 			ef.write(nothing)	
@@ -122,11 +124,14 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 						json_response_payload = yaml.load(request['response_payload'])
 						resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
 						ef.write (resp_json)
-					if "xml" in response_ct:
+					elif "xml" in response_ct:
 						xml_response_payload = xml.dom.minidom.parseString(request['response_payload'])
 						pretty_xml = xml_response_payload.toprettyxml()
-						resp_xml = cgi.escape(pretty_xml).encode('ascii', 'xmlcharrefreplace')
+#						resp_xml = cgi.escape(pretty_xml).encode('ascii', 'xmlcharrefreplace')
+						resp_xml = cgi.escape(pretty_xml).encode('ascii')
 						ef.write(resp_xml)
+					else:
+						ef.write(request['response_payload'])
 					ef.write (code_footer)	
 		else:
 			ef.write(nothing)
