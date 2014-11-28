@@ -36,6 +36,11 @@ def user_yes_no_query(question):
             return strtobool(raw_input().lower())
         except ValueError:
             sys.stdout.write('Please respond with \'y\' or \'n\'.\n')
+def process_stringbool(getForce):
+    try:
+        return strtobool(getForce.lower())
+    except ValueError:
+        sys.stdout.write('Invalid boolean property')
 
 def get_sysargs():
 	if len(sys.argv) < 4:
@@ -50,6 +55,7 @@ def get_sysargs():
 	wloc = wikiLoc(wikiUrl,spaceKey,parentTitle)
 	token = server.confluence2.login(user, password)
 	wauth = wikiAuth(user,password,token)
+	return (wloc,wauth,force)
 
 def get_std_in():
  	wikiUrl = raw_input("Enter wiki URL + port with no proxy or trailing slash: ")
@@ -61,7 +67,25 @@ def get_std_in():
 	wloc = wikiLoc(wikiUrl,spaceKey,parentTitle)
 	token = server.confluence2.login(user, password)
 	wauth = wikiAuth(user,password,token)
+	return (wloc,wauth,force)
 
+def get_properties_file():
+	# Load a bunch of abbreviations to replace text and shorten links
+	properties = {}
+	with open("confluence_properties.json.txt") as pfile:
+		prop_file = pfile.read().replace('\n', '')	
+		properties = ast.literal_eval(prop_file)
+	#	print "Abbreviation for enterprise: %s" % abbreviations["enterprise"]	
+	wikiUrl = properties['wikiUrl']
+	spaceKey = properties['spaceKey']
+	parentTitle = properties['parentTitle']
+	getforce = properties['getForce']
+	user = properties['user']
+	password = properties['password']
+	wloc = wikiLoc(wikiUrl,spaceKey,parentTitle)
+	token = server.confluence2.login(user, password)
+	wauth = wikiAuth(user,password,token)
+	return (wloc,wauth,force)
 
 def get_parent_id(wikAuth,wikLoc):
 # returns the ID of the parent page	
@@ -100,37 +124,32 @@ def create_update_page(wikAuth,wikLoc,force,page):
    				print "Not overwriting page %s, modifed by %s" % (modifier,pagetitle)  
    		else:
    			print "Overwriting page %s" % (modifier,pagetitle)		 		
+   			server.confluence2.storePage(token, page);
    	else:
 		print "Creating new page %s" % (pagetitle)
-
+		server.confluence2.storePage(token, page);
    		# create a new page
 
-space = page['space']
-print "space: %s " % space
-title = page['title']
-print "title: %s " % title
-content = page['content']
-print "content: %s " % content
-pageid = page['id']
-print "id: %s " % pageid
+# space = page['space']
+# print "space: %s " % space
+# title = page['title']
+# print "title: %s " % title
+# content = page['content']
+# print "content: %s " % content
+# pageid = page['id']
+# print "id: %s " % pageid
 
 
-newpage = {"space": "WST","title": "second test", "content":"<p>Hello multiverse!</p>"}
-newpage['parentId'] = pageid
-server.confluence2.storePage(token, newpage);
-#pattern = re.compile('^\|\|.*\n(?!\|)', re.MULTILINE);
-#content = pattern.sub('\g<0>' + input + '\n', content);
+# newpage = {"space": "WST","title": "second test", "content":"<p>Hello multiverse!</p>"}
+# newpage['parentId'] = pageid
+# server.confluence2.storePage(token, newpage);
 
-
-#replaceCode = re.compile (r"\[CDATA\[(.*)\]\]");
-#replaced = re.sub(replaceCode, "[CDATA[%s]]" % input, content);
-#content = replaced;
-#print content;
-#page['content'] = content;
 
 def main():
-	get_inputs()
-
+	(loc,auth,force) = get_properties_file()
+	parentId = get_parent_id(auth,loc)
+	page = get_page_data(contentFile, parentId)
+	create_update_page(auth,loc,force,page)
 
 # Calls the main() function
 if __name__ == '__main__':
