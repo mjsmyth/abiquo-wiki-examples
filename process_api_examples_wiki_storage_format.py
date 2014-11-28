@@ -87,7 +87,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
  				ccurl3 = "\t -H 'Content-Type: %s; version=3.2' \\ \n" % content_type_ascii
  			else: 
  				ccurl3 = "\t -H 'Content-Type: %s;' \\ \n" % content_type_ascii 	
- 			ccurl4 = "\t -d @requestpayload.xml \\ \n'"	
+ 			ccurl4 = "\t -d @requestpayload.xml \\ \n"	
  		ef.write(ccurl3)
  		ef.write(ccurl4)
 
