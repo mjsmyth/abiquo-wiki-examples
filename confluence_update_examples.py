@@ -1,7 +1,15 @@
 #!/usr/bin/python
 
 import sys, string, xmlrpclib, re
+from distutils.util import strtobool
 
+def user_yes_no_query(question):
+    sys.stdout.write('%s [y/n]\n' % question)
+    while True:
+        try:
+            return strtobool(raw_input().lower())
+        except ValueError:
+            sys.stdout.write('Please respond with \'y\' or \'n\'.\n')
 
 class wikiAuth:
 	def __init__(auser,apassword,atoken):
@@ -21,6 +29,14 @@ class wikiLoc:
 	# 	wiki_message = dowikimarkup(self.message)        
 	# 	return '| %s | %s | %s | | \n' % (wiki_internal_message_id, wiki_message, wiki_label)
 
+def user_yes_no_query(question):
+    sys.stdout.write('%s [y/n]\n' % question)
+    while True:
+        try:
+            return strtobool(raw_input().lower())
+        except ValueError:
+            sys.stdout.write('Please respond with \'y\' or \'n\'.\n')
+
 def get_sysargs():
 	if len(sys.argv) < 4:
 	   exit("Usage: " + sys.argv[0] + "  wikiUrl spaceKey parentPageTitle [--force]")
@@ -28,24 +44,24 @@ def get_sysargs():
 	wikiUrl = sys.argv[1]
 	spaceKey = sys.argv[2]
 	parentTitle = sys.argv[3]
-	# if force, overwrite manually edited examples
-	if len(sys.arg) > 4:
-		getforce = sys.argv[4]
-		force = strtobool(getforce)
-	# handle error	
-
-def get_inputs():
- 	wikiUrl = raw_input("Enter wiki URL + port with no proxy or trailing slash: ")
-	spaceKey = raw_input("Enter space key of wiki space: ")
-	parentTitle = raw_input("Enter title of parent page: ")
-	forceInput = raw_input("Force update of manually edited pages? ")
-	force = strtobool(forceInput)
-	# handle error
+	force = user_yes_no_query("Overwrite manually edited examples?")
 	user = raw_input("Enter user: ")
 	password = raw_input("Enter password: ")
 	wloc = wikiLoc(wikiUrl,spaceKey,parentTitle)
 	token = server.confluence2.login(user, password)
 	wauth = wikiAuth(user,password,token)
+
+def get_std_in():
+ 	wikiUrl = raw_input("Enter wiki URL + port with no proxy or trailing slash: ")
+	spaceKey = raw_input("Enter space key of wiki space: ")
+	parentTitle = raw_input("Enter title of parent page: ")
+	force = user_yes_no_query("Overwrite manually edited examples?")
+	user = raw_input("Enter user: ")
+	password = raw_input("Enter password: ")
+	wloc = wikiLoc(wikiUrl,spaceKey,parentTitle)
+	token = server.confluence2.login(user, password)
+	wauth = wikiAuth(user,password,token)
+
 
 def get_parent_id(wikAuth,wikLoc):
 # returns the ID of the parent page	
@@ -58,11 +74,10 @@ def get_parent_id(wikAuth,wikLoc):
 		print "Fault code: %d" % err.faultCode
 		print "Fault string: %s " % err.faultString	
 	if page:
-	# Check if this will work	
 		parentId = page['parentId']		
 		return parentId
 	else:
-		exit("Could not find page " + spacekey + ":" + pagetitle)	
+		exit("Could not find parent page " + spacekey + ":" + pagetitle)	
 
 def create_update_page(wikAuth,wikLoc,force,page):
 	server = xmlrpclib.ServerProxy(wikiurl + '/rpc/xmlrpc')
@@ -80,9 +95,13 @@ def create_update_page(wikAuth,wikLoc,force,page):
    		if modifier != wikAuth.user:
    			print "The page %s was manually modified by %s" % (modifier,pagetitle)
    			if force is True:
-   				
-   			   	print "Overwriting page %s, which was manually modified by %s" % (modifier,pagetitle)	
+   			   	print "Overwriting page %s, modified by %s" % (modifier,pagetitle)
+   			else:
+   				print "Not overwriting page %s, modifed by %s" % (modifier,pagetitle)  
+   		else:
+   			print "Overwriting page %s" % (modifier,pagetitle)		 		
    	else:
+		print "Creating new page %s" % (pagetitle)
 
    		# create a new page
 
