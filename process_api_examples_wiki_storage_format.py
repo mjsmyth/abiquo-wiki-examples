@@ -103,7 +103,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 					elif "xml" in content_type:
 						xml_request_payload = xml.dom.minidom.parseString(request['request_payload'])
 						pretty_xml = xml_request_payload.toprettyxml()
-						reqp_xml = cgi.escape(pretty_xml).encode('ascii', 'xmlcharrefreplace')
+						reqp_xml = cgi.escape(pretty_xml)
 						ef.write(reqp_xml)
 					else:
 						ef.write(request['request_payload'])	
@@ -128,8 +128,8 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 						xml_response_payload = xml.dom.minidom.parseString(request['response_payload'])
 						pretty_xml = xml_response_payload.toprettyxml()
 #						resp_xml = cgi.escape(pretty_xml).encode('ascii', 'xmlcharrefreplace')
-						resp_xml = cgi.escape(pretty_xml).encode('ascii')
-						ef.write(resp_xml)
+#						resp_xml = cgi.escape(pretty_xml)
+						ef.write(pretty_xml)
 					else:
 						ef.write(request['response_payload'])
 					ef.write (code_footer)	
