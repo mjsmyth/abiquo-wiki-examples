@@ -65,19 +65,34 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 		ef.write(hcurl)
 		ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + " \\ \n"
 		ef.write(ccurl1)
-		ccurl2 = ""
+		
 		request_head = request['request_headers']
+		ccurl2 = ""	
+		pat = re.compile('xml|json')
+
+		if 'Accept' in request_head:
+			accept = request_head['Accept']
+			accept_ascii = accept[0].encode('ascii')
+			if pat.match(accept_ascii)	
+				ccurl2 = "\t -H 'Accept: %s; version=3.2' \\ \n" % accept_ascii 
+			else:
+				ccurl2 = "\t -H 'Accept: %s;' \\ \n" % accept_ascci	
+		ef.write(ccurl2)
+		ccurl3 = ""
+		ccurl4 = ""
 		if 'Content-Type' in request_head:
 			content_type = request_head['Content-Type']
- 			ccurl2 = "\t -H 'Content-Type: %s " % content_type[0].encode('ascii') + "\\ \n"
- 		ef.write(ccurl2)	
- 		ccurl3 = ""	
-		if 'Accept' in request_head:
-			accept = request_head['Accept'] 
-			ccurl3 = "\t -H 'Accept: %s " % accept[0].encode('ascii') + "\\ \n"
-		ef.write(ccurl3)
-		ccurl4 = '\t -u user:password --verbose ]]></ac:plain-text-body></ac:macro>'	
-		ef.write(ccurl4)
+			content_type_ascii = content_type[0].encode('ascii')
+			if pat.match(content_type_ascii):
+ 				ccurl3 = "\t -H 'Content-Type: %s; version=3.2 \\ \n" % content_type_ascii
+ 			else: 
+ 				ccurl3 = "\t -H 'Content-Type: %s;' \\ \n" % content_type_ascii 	
+ 			ccurl4 = "\t -d @requestpayload.xml \\ \n'"	
+ 		ef.write(ccurl3)
+ 		ef.write(ccurl4)
+
+		ccurl5 = '\t -u user:password --verbose ]]></ac:plain-text-body></ac:macro>'	
+		ef.write(ccurl5)
 # 		mets = "*Method: %s \n" % request['method'] # string
 # 		ef.write(mets)
 #		urls = "<strong>URL:</strong> %s \n" % request['url'] # string
@@ -103,8 +118,8 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 					elif "xml" in content_type:
 						xml_request_payload = xml.dom.minidom.parseString(request['request_payload'])
 						pretty_xml = xml_request_payload.toprettyxml()
-						reqp_xml = cgi.escape(pretty_xml)
-						ef.write(reqp_xml)
+#						reqp_xml = cgi.escape(pretty_xml)
+						ef.write(pretty_xml)
 					else:
 						ef.write(request['request_payload'])	
 					ef.write (code_footer)	

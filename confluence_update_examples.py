@@ -97,17 +97,19 @@ def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId
    	else:
 		print "Creating new page %s" % (pagetitle)
 		newpage = {}
-		newpage['title'] = pagetitle
+		print "parentId: %s" % (parentId)
 		newpage['space'] = wikLoc.spaceKey
-		newpage['content'] = newcontent
 		newpage['parentId'] = parentId
+		newpage['title'] = pagetitle
+		newpage['content'] = newcontent
+
 		token = server.confluence2.login(wikAuth.user, wikAuth.password)
 		server.confluence2.storePage(token, newpage)
    		# create a new page
 
 def get_content_file_names():
 	# read all number 0001 pages in the directory
-	mypath = "selected_files/*.0001.txt"
+	mypath = "storage_format_files/*.0001.txt"
 
 	onlyfiles = glob.glob(mypath)
 	pagenames = []
@@ -141,7 +143,7 @@ def get_content_file_names():
 def main():
 	(loc,auth,force,server) = get_properties_file()
 	parentPage = get_page(auth,loc,loc.parentTitle,server)
-	parentId = parentPage['parentId']
+	parentId = parentPage['id']
 	(filenames,pagenames) = get_content_file_names()
 	for idx, pagen in enumerate(pagenames):
 		ncf = open(filenames[idx],'r')	
