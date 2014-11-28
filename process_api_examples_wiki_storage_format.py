@@ -73,7 +73,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 		if 'Accept' in request_head:
 			accept = request_head['Accept']
 			accept_ascii = accept[0].encode('ascii')
-			if re.search(r'xml|json',accept_ascii):
+			if re.search(r'abiquo',accept_ascii):
 				ccurl2 = "\t -H 'Accept: %s; version=3.2' \\ \n" % accept_ascii 
 			else:
 				ccurl2 = "\t -H 'Accept: %s;' \\ \n" % accept_ascii	
@@ -83,7 +83,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 		if 'Content-Type' in request_head:
 			content_type = request_head['Content-Type']
 			content_type_ascii = content_type[0].encode('ascii')
-			if re.search(r'xml|json',content_type_ascii):
+			if re.search(r'abiquo',content_type_ascii):
  				ccurl3 = "\t -H 'Content-Type: %s; version=3.2' \\ \n" % content_type_ascii
  			else: 
  				ccurl3 = "\t -H 'Content-Type: %s;' \\ \n" % content_type_ascii 	
