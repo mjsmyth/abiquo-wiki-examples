@@ -158,14 +158,14 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 				response_ct = response_ct_list[0]
 				if response_ct:
 					if "json" in response_ct:
-					    if request['response_payload']:
-					        ef.write (code_header)
-					        json_response_payload = yaml.load(request['response_payload'])
-						    resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
-						    ef.write (resp_json)
-						    ef.write (code_footer)
+						if request['response_payload']:
+							ef.write (code_header)
+							json_response_payload = yaml.load(request['response_payload'])
+							resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
+							ef.write (resp_json)
+							ef.write (code_footer)
 						else:
-						    ef.write (nothing)
+							ef.write (nothing)
 					elif "xml" in response_ct:
 						if request['response_payload']:
 							ef.write (code_header)
