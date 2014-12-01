@@ -114,14 +114,16 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 				content_type = content_type_list[0]
 				if content_type:
 					if "json" in content_type:
-						if request['request_payload']:
-							ef.write (code_header)
-							json_request_payload = yaml.load(request['request_payload'])
-							reqp_json = json.dumps(json_request_payload, sort_keys=False, indent=2)
-							ef.write (reqp_json)
-							ef.write (code_footer)
-						else:
-							ef.write(nothing)
+						json_request_payload = ""
+						json_request_payload = yaml.load(request['request_payload'])
+						if json_request_payload != "":
+							if any(c.isalpha() for c in json_request_payload):
+								ef.write (code_header)
+								reqp_json = json.dumps(json_request_payload, sort_keys=False, indent=2)
+								ef.write (reqp_json)
+								ef.write (code_footer)
+							else:
+								ef.write(nothing)
 					elif "xml" in content_type:
 						if request['request_payload']:
 							print "request_payload 0: %s" % request['request_payload']
@@ -158,14 +160,16 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 				response_ct = response_ct_list[0]
 				if response_ct:
 					if "json" in response_ct:
-						if request['response_payload']:
-							ef.write (code_header)
-							json_response_payload = yaml.load(request['response_payload'])
-							resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
-							ef.write (resp_json)
-							ef.write (code_footer)
-						else:
-							ef.write (nothing)
+						json_response_payload = ""
+						json_response_payload = yaml.load(request['response_payload'])
+						if json_response_payload != "":
+							if any(c.isalpha() for c in json_response_payload):
+								ef.write (code_header)
+								resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
+								ef.write (resp_json)
+								ef.write (code_footer)
+							else:
+								ef.write (nothing)
 					elif "xml" in response_ct:
 						if request['response_payload']:
 							ef.write (code_header)
