@@ -50,6 +50,8 @@ def get_properties_file():
 	wauth = wikiAuth(user,password,token)
 	return (wloc,wauth,force,server)
 
+
+
 def get_page(wikAuth,wikLoc,pageTitle,server):
 # returns the page
 	page = {}
@@ -99,8 +101,8 @@ def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId
 
 def get_content_file_names():
 	# read all number 0001 pages in the directory
-	mypath = "storage_format_files/*.0001.txt"
-
+#	mypath = "storage_format_files/*.0001.txt"
+	mypath = "stor/*.0001.txt"
 	onlyfiles = glob.glob(mypath)
 	pagenames = []
 

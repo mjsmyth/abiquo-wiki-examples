@@ -116,14 +116,17 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 					if "json" in content_type:
 						json_request_payload = ""
 						json_request_payload = yaml.load(request['request_payload'])
-						if json_request_payload != "":
-							if any(c.isalpha() for c in json_request_payload):
+						if "text" in content_type:
+							ef.write(nothing)
+						else:	
+							reqp_json = ""
+							reqp_json = json.dumps(json_request_payload, sort_keys=False, indent=2)
+							if reqp_json != "":
 								ef.write (code_header)
-								reqp_json = json.dumps(json_request_payload, sort_keys=False, indent=2)
 								ef.write (reqp_json)
 								ef.write (code_footer)
 							else:
-								ef.write(nothing)
+								ef.write(nothing)	
 					elif "xml" in content_type:
 						if request['request_payload']:
 							print "request_payload 0: %s" % request['request_payload']
@@ -145,9 +148,9 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 						else:	
 							ef.write(nothing)
 					else:
-						ef.write (code_header)
-						ef.write(request['request_payload'])
-						ef.write (code_footer)	
+						ef.write(nothing)
+				else:
+					ef.write(nothing)		
 		else:
 			ef.write(nothing)	
 
@@ -162,12 +165,18 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 					if "json" in response_ct:
 						json_response_payload = ""
 						json_response_payload = yaml.load(request['response_payload'])
-						if json_response_payload != "":
-							if any(c.isalpha() for c in json_response_payload):
-								ef.write (code_header)
-								resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
-								ef.write (resp_json)
-								ef.write (code_footer)
+						if "text" in response_ct:
+							ef.write(nothing)
+#						if json_response_payload != "":
+#							if any(c.isalpha() for c in json_response_payload):
+						else:	
+							resp_json = ""
+							resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
+							if resp_json != "":
+								if any(c.isalpha() for c in resp_json):
+									ef.write (code_header)
+									ef.write (resp_json)
+									ef.write (code_footer)
 							else:
 								ef.write (nothing)
 					elif "xml" in response_ct:
@@ -191,9 +200,9 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 						else:	
 							ef.write(nothing)
 					else:
-						ef.write (code_header)
-						ef.write(request['response_payload'])
-						ef.write (code_footer)	
+						ef.write(nothing)
+				else:
+					ef.write(nothing)			
 		else:
 			ef.write(nothing)
 		ef.close()		
