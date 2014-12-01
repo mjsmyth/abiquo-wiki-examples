@@ -137,7 +137,10 @@ def main():
 		ncf = open(filenames[idx],'r')	
 		newcontent = ncf.read()
 		# create or update pages
-		create_update_page(auth,loc,force,pagen,newcontent,server,parentId)
+		try:
+			create_update_page(auth,loc,force,pagen,newcontent,server,parentId)
+		except:
+			print "oops - %s " % pagen
 		ncf.close()
 
 

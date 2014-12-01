@@ -175,14 +175,14 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 								ef.write (pretty_xml_response)
 								ef.write (code_footer)
 							else:
-								ef.write(code_header)
+								print "Response payload is empty"
 								ef.write(nothing)
-								ef.write(code_footer)
 						else:	
 							ef.write(nothing)
 					else:
+						ef.write (code_header)
 						ef.write(request['response_payload'])
-					ef.write (code_footer)	
+						ef.write (code_footer)	
 		else:
 			ef.write(nothing)
 		ef.close()		
