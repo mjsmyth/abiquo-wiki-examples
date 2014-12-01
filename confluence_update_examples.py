@@ -1,15 +1,11 @@
 #!/usr/bin/python
-
+# Read text from the first example file of each type and update or create wiki pages with the content
+# Read properties file with wiki credentials and details
+# Force option overwrites manually updated pages
+# Compatible with: Python 2.7
+# TODO: parameterise input files directory and mediatype version number
 import sys, string, xmlrpclib, re, ast, glob, os
 from distutils.util import strtobool
-
-def user_yes_no_query(question):
-    sys.stdout.write('%s [y/n]\n' % question)
-    while True:
-        try:
-            return strtobool(raw_input().lower())
-        except ValueError:
-            sys.stdout.write('Please respond with \'y\' or \'n\'.\n')
 
 class wikiAuth:
 	def __init__(self,auser,apassword,atoken):
@@ -24,23 +20,16 @@ class wikiLoc:
 		self.parentTitle=aparentTitle
 
 
-def user_yes_no_query(question):
-    sys.stdout.write('%s [y/n]\n' % question)
-    while True:
-        try:
-            return strtobool(raw_input().lower())
-        except ValueError:
-            sys.stdout.write('Please respond with \'y\' or \'n\'.\n')
-def process_stringbool(getForce):
+def process_stringbool(userInput):
     try:
-        return strtobool(getForce.lower())
+        return strtobool(userInput.lower())
     except ValueError:
         sys.stdout.write('Invalid boolean property')
 
 
 
 def get_properties_file():
-	# Load a bunch of abbreviations to replace text and shorten links
+	# Load properties for the script, including wiki properties that can't be stored in a public repo
 	properties = {}
 	with open("confluence_properties.json.txt") as pfile:
 		prop_file = pfile.read().replace('\n', '')	
@@ -75,6 +64,7 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	
 
 def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId):
+	# create or update pages as appropriate
 	token = server.confluence2.login(wikAuth.user, wikAuth.password)
 	gotpage = get_page(wikAuth,wikLoc,pagetitle,server)
 	if gotpage:
@@ -126,9 +116,6 @@ def get_content_file_names():
 		pagenames.append(myf)
 	return(onlyfiles,pagenames)
 
-
-	
-
 # space = page['space']
 # print "space: %s " % space
 # title = page['title']
@@ -138,19 +125,20 @@ def get_content_file_names():
 # pageid = page['id']
 # print "id: %s " % pageid
 
-
-
 def main():
+	# load properties file with wiki properties
 	(loc,auth,force,server) = get_properties_file()
+	# retrieve the parent page where the pages will be stored and get its ID
 	parentPage = get_page(auth,loc,loc.parentTitle,server)
 	parentId = parentPage['id']
+	# retrieve the content of the files to create as pages
 	(filenames,pagenames) = get_content_file_names()
 	for idx, pagen in enumerate(pagenames):
 		ncf = open(filenames[idx],'r')	
 		newcontent = ncf.read()
+		# create or update pages
 		create_update_page(auth,loc,force,pagen,newcontent,server,parentId)
 		ncf.close()
-
 
 
 # Calls the main() function
