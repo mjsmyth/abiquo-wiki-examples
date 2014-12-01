@@ -14,6 +14,7 @@ import re
 import xml.dom.minidom
 import os.path
 import cgi
+from lxml import etree
 
  
 def print_line(line):
@@ -36,7 +37,6 @@ def open_if_not_existing(filename):
         return None
     fobj = os.fdopen(fd, "w")
     return fobj
-
 
 def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 #   request = yaml.load(line)
@@ -110,19 +110,29 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 			if content_type_list:
 				content_type = content_type_list[0]
 				if content_type:
-					ef.write (code_header)
 					if "json" in content_type:
+						ef.write (code_header)
 						json_request_payload = yaml.load(request['request_payload'])
 						reqp_json = json.dumps(json_request_payload, sort_keys=False, indent=2)
 						ef.write (reqp_json)
+						ef.write (code_footer)
 					elif "xml" in content_type:
-						xml_request_payload = xml.dom.minidom.parseString(request['request_payload'])
-						pretty_xml = xml_request_payload.toprettyxml()
+						if request['request_payload']:
+							ef.write (code_header)
+							print "request_payload 0: %s" % request['request_payload'][:]
+							xml_request_payload = request['request_payload'].encode('ascii')
+							valid_xml_request = etree.fromstring(xml_request_payload)
+							print "validation: %s" % valid_xml_request
+							pretty_xml_request = etree.tostring(valid_xml_request, pretty_print=True)
+						#	xml_request_payload = xml.dom.minidom.parseString(request['request_payload'])
+						#	pretty_xml = xml_request_payload.toprettyxml()
 #						reqp_xml = cgi.escape(pretty_xml)
-						ef.write(pretty_xml)
+							ef.write (pretty_xml_request)
+							ef.write (code_footer)
+						else:	
+							ef.write(nothing)
 					else:
 						ef.write(request['request_payload'])	
-					ef.write (code_footer)	
 		else:
 			ef.write(nothing)	
 
@@ -140,11 +150,17 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 						resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
 						ef.write (resp_json)
 					elif "xml" in response_ct:
-						xml_response_payload = xml.dom.minidom.parseString(request['response_payload'])
-						pretty_xml = xml_response_payload.toprettyxml()
-#						resp_xml = cgi.escape(pretty_xml).encode('ascii', 'xmlcharrefreplace')
-#						resp_xml = cgi.escape(pretty_xml)
-						ef.write(pretty_xml)
+						if request['response_payload']:
+							ef.write (code_header)
+							print "response_payload 0: %s" % request['response_payload'][:]
+							xml_response_payload = request['response_payload'].encode('ascii')
+							valid_xml_response = etree.fromstring(xml_response_payload)
+							print "validation: %s" % valid_xml_response
+							pretty_xml_response = etree.tostring(valid_xml_response, pretty_print=True)
+							ef.write (pretty_xml_response)
+							ef.write (code_footer)
+						else:	
+							ef.write(nothing)
 					else:
 						ef.write(request['response_payload'])
 					ef.write (code_footer)	
