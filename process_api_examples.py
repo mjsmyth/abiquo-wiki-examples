@@ -18,6 +18,12 @@ from lxml import etree
 from StringIO import StringIO
 from io import BytesIO
 
+class allheaders:
+	def __init__(self,aRequestAccept,aRequestContentType,aResponseContentType):
+		self.reqAc=aRequestAccept
+		self.reqCT=aRequestContentType
+		self.rspCT=aResponseContentType
+
  
 def print_line(line):
 	request = yaml.load(line)
@@ -41,6 +47,69 @@ def open_if_not_existing(filename):
     return fobj
 
 
+def process_payload(mediatype,payload):
+	if "text" in mediatype:
+		text_payload = payload.encode('ascii')
+		return text_payload
+
+	elif "json" in mediatype:
+		json_payload = ""
+		pretty_json = ""
+		try:
+			json_payload = yaml.load(payload)
+			pretty_json = json.dumps(json_payload, sort_keys=False, indent=2)
+		except:
+			pretty_json = ""
+			print "Exception: json payload - could not load payload with yaml or dump payload"			
+		return pretty_json
+			
+	elif "xml" in mediatype:
+		xml_payload = ""
+		valid_xml = ""
+		pretty_xml = ""
+		try:
+			xml_payload = payload.encode('ascii')
+			valid_xml = etree.fromstring(xml_payload)
+		except:
+			print "Exception: xml payload - could not validate the xml"
+			valid_xml = ""	
+		try:		
+			pretty_xml = etree.tostring(valid_xml, pretty_print=True)	
+			print "Request payload is well formed"
+		except Exception:
+			print "Exception: XML was not well formed and could not be pretty printed!"
+			pretty_xml = valid_xml
+		return pretty_xml
+	
+	else:
+		weird_payload = ""
+		weird_payload = payload.encode('ascii')
+		return weird_payload
+
+
+def process_headers(raw_request_head,raw_response_head):
+	request_acc = ""
+	request_ct = ""
+	response_ct = ""
+
+	if 'Accept' in raw_request_head:
+		request_acc_list = raw_request_head['Accept']
+		if request_acc_list:
+			request_acc = request_acc_list[0].encode('ascii')
+
+	if 'Content-Type' in request_head:
+		request_ct_list = request_head['Content-Type']
+		if request_ct_list:
+			request_ct = request_ct_list[0].encode('ascii')
+
+	if 'Content-Type' in raw_response_head:
+		response_ct_list = raw_response_head['Content-Type']
+		if response_ct_list:
+			response_ct = response_ct_list[0].encode('ascii')			
+	hedrs = allheaders(request_acc,request_ct,response_ct)
+	return hedrs
+
+
 def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 #   request = yaml.load(line)
 	code_header = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA['
@@ -48,6 +117,11 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 
 
 	request = json.loads(line)
+	raw_request_headers = request['request_headers']
+	raw_response_headers = request['response_headers']
+	hdrs = process_headers(raw_request_headers,raw_response_headers)
+
+
 	if request['status'] < 400:
 	# write the request to a file, but if there are already queries from this run, append numbers to the files
 
@@ -69,28 +143,21 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 		ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + " \\ \n"
 		ef.write(ccurl1)
 		
-		request_head = request['request_headers']
 		ccurl2 = ""	
 
+		if re.search(r'abiquo',hdrs.reqAc):
+			ccurl2 = "\t -H 'Accept:%s' \\ \n" % hdrs.reqAc 
+		else:
+			ccurl2 = "\t -H 'Accept:%s' \\ \n" % hdrs.reqAc	
 
-		if 'Accept' in request_head:
-			accept = request_head['Accept']
-			accept_ascii = accept[0].encode('ascii')
-			if re.search(r'abiquo',accept_ascii):
-				ccurl2 = "\t -H 'Accept: %s; version=3.2' \\ \n" % accept_ascii 
-			else:
-				ccurl2 = "\t -H 'Accept: %s;' \\ \n" % accept_ascii	
 		ef.write(ccurl2)
 		ccurl3 = ""
 		ccurl4 = ""
-		if 'Content-Type' in request_head:
-			content_type = request_head['Content-Type']
-			content_type_ascii = content_type[0].encode('ascii')
-			if re.search(r'abiquo',content_type_ascii):
- 				ccurl3 = "\t -H 'Content-Type: %s; version=3.2' \\ \n" % content_type_ascii
- 			else: 
- 				ccurl3 = "\t -H 'Content-Type: %s;' \\ \n" % content_type_ascii 	
- 			ccurl4 = "\t -d @requestpayload.xml \\ \n"	
+		if re.search(r'abiquo',hdrs.reqCT):
+			ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT
+		else: 
+			ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT 	
+ 		ccurl4 = "\t -d @requestpayload.xml \\ \n"	
  		ef.write(ccurl3)
  		ef.write(ccurl4)
 
@@ -102,111 +169,41 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 #		ef.write(urls)
 		stat = "<p><strong>Success status code</strong>: %s </p>" % request['status'] # int
 		ef.write(stat)
-		response_head = request['response_headers']
+
 #		reqh = "Request headers: %s" % request['request_headers'] # It's a JSON dictionary
 		nothing = "<p>--none--</p>" 
 		emptypayload = "<p>--empty--</p>"
 		reqh = "<p><strong>Request payload</strong>:</p>"
 		ef.write (reqh)
 
-		if 'Content-Type' in request_head:
-			content_type_list = request_head['Content-Type']
-			if content_type_list:
-				content_type = content_type_list[0]
-				if content_type:
-					if "json" in content_type:
-						json_request_payload = ""
-						json_request_payload = yaml.load(request['request_payload'])		
-						reqp_json = ""
-						reqp_json = json.dumps(json_request_payload, sort_keys=False, indent=2)
-						if reqp_json:
-							ef.write (code_header)
-							ef.write (reqp_json)
-							ef.write (code_footer)
-						else:
-							ef.write(emptypayload)	
-					elif "xml" in content_type:
-						if request['request_payload']:
-							print "request_payload 0: %s" % request['request_payload']
-							xml_request_payload = request['request_payload'].encode('ascii')
-							if xml_request_payload:
-								pretty_xml_request = xml_request_payload
-								ef.write (code_header)
-								try:
-									valid_xml_request = etree.fromstring(xml_request_payload)
-									pretty_xml_request = etree.tostring(valid_xml_request, pretty_print=True)	
-									print "Request payload is well formed"
-								except Exception, e:
-									print "Exception: XML was not well formed and could not be pretty printed!"
-								ef.write (pretty_xml_request)
-								ef.write (code_footer)	
-							else:
-								print "No content in request payload"
-								ef.write(emptypayload)
-						else:	
-							ef.write(nothing)
-					elif "text" in content_type:
-						if not request['request_payload']: 
-							ef.write(emptypayload)
-					else:
-						ef.write(nothing)
-				else:
-					ef.write(nothing)		
+		
+		if hdrs.reqCT:
+			pretty_payload = ""
+			pretty_payload = process_payload(content_type,request['request_payload'])
+			if pretty_payload:
+				ef.write (code_header)
+				ef.write (pretty_payload)
+				ef.write (code_footer)
+			else:
+				ef.write (emptypayload)		
 		else:
-			ef.write(nothing)	
+			ef.write(nothing)
 
 		resh = "<p><strong>Response payload</strong>:</p>"
 		ef.write (resh)
 #		accept_type_list = request_head['Accept']
 		if 	request['status'] != 204:
-			if 'Content-Type' in response_head:
-				response_ct_list = response_head['Content-Type']
-				if response_ct_list:
-					response_ct = response_ct_list[0]
-					if response_ct:
-						if "json" in response_ct:
-							json_response_payload = ""
-							json_response_payload = yaml.load(request['response_payload'])	
-							resp_json = ""
-							resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
-							if resp_json:
-								ef.write (code_header)
-								ef.write (resp_json)
-								ef.write (code_footer)
-							else:
-								ef.write (emptypayload)
-						elif "xml" in response_ct:
-							if request['response_payload']:
-								ef.write (code_header)
-								print "response_payload 0: %s" % request['response_payload']
-								xml_response_payload = request['response_payload'].encode('ascii')
-								if xml_response_payload:
-									pretty_xml_response = xml_response_payload
-									try:
-										valid_xml_response = etree.fromstring(xml_response_payload)
-										pretty_xml_response = etree.tostring(valid_xml_response, pretty_print=True)
-										print "Response payload is well-formed"
-									except Exception, e:
-										print "Exception: XML could not be pretty printed!"	
-									ef.write (pretty_xml_response)
-									ef.write (code_footer)
-								else:
-									print "No content in response payload"
-									ef.write(emptypayload)
-							else:	
-								ef.write(nothing)
-						elif "text" in response_ct:
-							if not request['request_payload']: 
-								ef.write(emptypayload)
-						else:
-							if not request['request_payload']: 
-								ef.write(emptypayload)
-					else:
-						ef.write(nothing)
+			if hdrs.rspCT:
+				pretty_payload = ""
+				pretty_payload = process_payload(response_ct,request['response_payload'])
+				if pretty_payload:
+					ef.write (code_header)
+					ef.write (pretty_payload)
+					ef.write (code_footer)
 				else:
-					ef.write(nothing)	
+					ef.write (emptypayload)
 			else:
-				ef.write(nothing)						
+				ef.write(nothing)
 		else:
 			ef.write(nothing)
 		ef.close()		
@@ -254,7 +251,8 @@ def rep_text(text,abbreviation):
 
 
 def main():
-	output_subdir = "storage_format_files"	
+#	output_subdir = "storage_format_files"	
+	output_subdir = "test_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links
 	abbreviations = {}
