@@ -214,24 +214,18 @@ def print_summary_line(line):
 	print "URL: %s" % request['url'] # string
 	print "Status: %s" % request['status'] # int
 
-def sub_media_type(mediatype):
+def sub_media_type(mediatype):	
 	if mediatype:
 		subbed_type = mediatype
-		if re.match("application/vnd\.abiquo\.",subbed_type):
-			subbed_type = re.sub("application/vnd\.abiquo\.","",subbed_type)
-		if re.search(";\s*?version=[0-9]\.[0-9]",subbed_type):
-			subbed_type = re.sub(';\s*?version\=[0-9]\.[0-9]',"",subbed_type)
-		if re.search("/",subbed_type):
-			subbed_type = re.sub("/","_",subbed_type)
-		if re.search("\+",subbed_type):
-			subbed_type = re.sub("\+","_",subbed_type)	
-		if re.search("-",subbed_type):
-			subbed_type = re.sub("-","_",subbed_type)		
+		subbed_type = re.sub("application/vnd\.abiquo\.","",subbed_type)
+		subbed_type = re.sub(';\s*?version\=[0-9]\.[0-9]',"",subbed_type)
+		subbed_type = re.sub("\+","_",subbed_type)	
+		subbed_type = re.sub("-","_",subbed_type)		
 	else:
 		subbed_type = ""		
 	return subbed_type
 
-def create_file_name(line,abbreviation,hdrs):
+def create_file_name(line,abbreviations,hdrs):
 #	request = json.loads(line)
 	request = yaml.load(line)
 	example_file_name = ""
@@ -244,18 +238,26 @@ def create_file_name(line,abbreviation,hdrs):
 	print "Raw_url: %s" % raw_url
 	raw_url_list = raw_url.split("/")
 	for ruli in raw_url_list:
-		ruli = rep_text(ruli,abbreviation)
+		ruli = rep_text(ruli,abbreviations)
 		rep_url_list.append(ruli)
 	example_file_name = raw_method + "_".join(rep_url_list) 
 	if req_ct:
+		req_ct = rep_abbrev(req_ct,abbreviations)
 		example_file_name = example_file_name + "_CT_" + req_ct 
 	if rsp_ct:
+		rsp_ct = rep_abbrev(rsp_ct,abbreviations)
 		example_file_name = example_file_name + "_AC_" + rsp_ct	
 	return example_file_name
 
+def rep_abbrev(text,abbreviations):
+	for abbi, abbr in abbreviations.iteritems():
+		text = text.replace(abbi,abbr)
+		text = re.sub("\*/\*","_any_")
+		text = re.sub("/","_",text)	
+	return text	
 
-def rep_text(text,abbreviation):
-	for abbi, abbr in abbreviation.iteritems():
+def rep_text(text,abbreviations):
+	for abbi, abbr in abbreviations.iteritems():
 		text = text.replace(abbi,abbr)
 # If it's a storage pool name		
 	if "-" in text:
