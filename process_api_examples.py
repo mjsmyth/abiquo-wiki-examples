@@ -115,17 +115,11 @@ def process_headers(raw_request_head,raw_response_head):
 	return hedrs
 
 
-def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
+def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 #   request = yaml.load(line)
 	code_header = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA['
 	code_footer = ']]></ac:plain-text-body></ac:macro>'
-
-
 	request = json.loads(line)
-	raw_request_headers = request['request_headers']
-	raw_response_headers = request['response_headers']
-	hdrs = process_headers(raw_request_headers,raw_response_headers)
-
 
 	if request['status'] < 400:
 	# write the request to a file, but if there are already queries from this run, append numbers to the files
@@ -220,13 +214,32 @@ def print_summary_line(line):
 	print "URL: %s" % request['url'] # string
 	print "Status: %s" % request['status'] # int
 
+def sub_media_type(mediatype):
+	if mediatype:
+		subbed_type = mediatype
+		if re.match("application/vnd\.abiquo\.",subbed_type):
+			subbed_type = re.sub("application/vnd\.abiquo\.","",subbed_type)
+		if re.search(";\s*?version=[0-9]\.[0-9]",subbed_type):
+			subbed_type = re.sub(';\s*?version\=[0-9]\.[0-9]',"",subbed_type)
+		if re.search("/",subbed_type):
+			subbed_type = re.sub("/","_",subbed_type)
+		if re.search("\+",subbed_type):
+			subbed_type = re.sub("\+","_",subbed_type)	
+		if re.search("-",subbed_type):
+			subbed_type = re.sub("-","_",subbed_type)		
+	else:
+		subbed_type = ""		
+	return subbed_type
 
-def create_file_name(line,abbreviation):
+def create_file_name(line,abbreviation,hdrs):
 #	request = json.loads(line)
 	request = yaml.load(line)
 	example_file_name = ""
 	raw_url = request['url']
 	raw_method = request['method']
+	req_acc = sub_media_type(hdrs.reqAc)
+	req_ct = sub_media_type(hdrs.reqCT)
+	rsp_ct = sub_media_type(hdrs.rspCT)
 	rep_url_list = []
 	print "Raw_url: %s" % raw_url
 	raw_url_list = raw_url.split("/")
@@ -234,6 +247,10 @@ def create_file_name(line,abbreviation):
 		ruli = rep_text(ruli,abbreviation)
 		rep_url_list.append(ruli)
 	example_file_name = raw_method + "_".join(rep_url_list) 
+	if req_ct:
+		example_file_name = example_file_name + "_CT_" + req_ct 
+	if rsp_ct:
+		example_file_name = example_file_name + "_AC_" + rsp_ct	
 	return example_file_name
 
 
@@ -269,10 +286,14 @@ def main():
 
 	with open("requests.log") as file:
 		for line in file:
-			ex_file_name = create_file_name(line,abbreviations)
+			request = yaml.load(line)
+			raw_request_headers = request['request_headers']
+			raw_response_headers = request['response_headers']
+			hdrs = process_headers(raw_request_headers,raw_response_headers)
+			ex_file_name = create_file_name(line,abbreviations,hdrs)
 			print "ex_file_name: %s" % ex_file_name
 #			print_summary_line(line)
-			pretty_print_line(output_subdir,ex_file_name,line,files_dictionary)	
+			pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary)	
 #			ex_file = open(os.path.join(output_subdir,ex_file_name), 'w')	
 
 # Calls the main() function
