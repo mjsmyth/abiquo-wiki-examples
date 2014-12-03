@@ -105,6 +105,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 		response_head = request['response_headers']
 #		reqh = "Request headers: %s" % request['request_headers'] # It's a JSON dictionary
 		nothing = "<p>--none--</p>" 
+		emptypayload = "<p>--empty--</p>"
 		reqh = "<p><strong>Request payload</strong>:</p>"
 		ef.write (reqh)
 
@@ -115,18 +116,15 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 				if content_type:
 					if "json" in content_type:
 						json_request_payload = ""
-						json_request_payload = yaml.load(request['request_payload'])
-						if "text" in content_type:
-							ef.write(nothing)
-						else:	
-							reqp_json = ""
-							reqp_json = json.dumps(json_request_payload, sort_keys=False, indent=2)
-							if reqp_json != "":
-								ef.write (code_header)
-								ef.write (reqp_json)
-								ef.write (code_footer)
-							else:
-								ef.write(nothing)	
+						json_request_payload = yaml.load(request['request_payload'])		
+						reqp_json = ""
+						reqp_json = json.dumps(json_request_payload, sort_keys=False, indent=2)
+						if reqp_json:
+							ef.write (code_header)
+							ef.write (reqp_json)
+							ef.write (code_footer)
+						else:
+							ef.write(emptypayload)	
 					elif "xml" in content_type:
 						if request['request_payload']:
 							print "request_payload 0: %s" % request['request_payload']
@@ -143,10 +141,13 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 								ef.write (pretty_xml_request)
 								ef.write (code_footer)	
 							else:
-								print "Request payload is empty"
-								ef.write(nothing)
+								print "No content in request payload"
+								ef.write(emptypayload)
 						else:	
 							ef.write(nothing)
+					elif "text" in content_type:
+						if not request['request_payload']: 
+							ef.write(emptypayload)
 					else:
 						ef.write(nothing)
 				else:
@@ -157,52 +158,55 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 		resh = "<p><strong>Response payload</strong>:</p>"
 		ef.write (resh)
 #		accept_type_list = request_head['Accept']
-		if 'Content-Type' in response_head:
-			response_ct_list = response_head['Content-Type']
-			if response_ct_list:
-				response_ct = response_ct_list[0]
-				if response_ct:
-					if "json" in response_ct:
-						json_response_payload = ""
-						json_response_payload = yaml.load(request['response_payload'])
-						if "text" in response_ct:
-							ef.write(nothing)
-#						if json_response_payload != "":
-#							if any(c.isalpha() for c in json_response_payload):
-						else:	
+		if 	request['status'] != 204:
+			if 'Content-Type' in response_head:
+				response_ct_list = response_head['Content-Type']
+				if response_ct_list:
+					response_ct = response_ct_list[0]
+					if response_ct:
+						if "json" in response_ct:
+							json_response_payload = ""
+							json_response_payload = yaml.load(request['response_payload'])	
 							resp_json = ""
 							resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
-							if resp_json != "":
-								if any(c.isalpha() for c in resp_json):
-									ef.write (code_header)
-									ef.write (resp_json)
-									ef.write (code_footer)
-							else:
-								ef.write (nothing)
-					elif "xml" in response_ct:
-						if request['response_payload']:
-							ef.write (code_header)
-							print "response_payload 0: %s" % request['response_payload']
-							xml_response_payload = request['response_payload'].encode('ascii')
-							if xml_response_payload:
-								pretty_xml_response = xml_response_payload
-								try:
-									valid_xml_response = etree.fromstring(xml_response_payload)
-									pretty_xml_response = etree.tostring(valid_xml_response, pretty_print=True)
-									print "Response payload is well-formed"
-								except Exception, e:
-									print "Exception: XML could not be pretty printed!"	
-								ef.write (pretty_xml_response)
+							if resp_json:
+								ef.write (code_header)
+								ef.write (resp_json)
 								ef.write (code_footer)
 							else:
-								print "Response payload is empty"
+								ef.write (emptypayload)
+						elif "xml" in response_ct:
+							if request['response_payload']:
+								ef.write (code_header)
+								print "response_payload 0: %s" % request['response_payload']
+								xml_response_payload = request['response_payload'].encode('ascii')
+								if xml_response_payload:
+									pretty_xml_response = xml_response_payload
+									try:
+										valid_xml_response = etree.fromstring(xml_response_payload)
+										pretty_xml_response = etree.tostring(valid_xml_response, pretty_print=True)
+										print "Response payload is well-formed"
+									except Exception, e:
+										print "Exception: XML could not be pretty printed!"	
+									ef.write (pretty_xml_response)
+									ef.write (code_footer)
+								else:
+									print "No content in response payload"
+									ef.write(emptypayload)
+							else:	
 								ef.write(nothing)
-						else:	
-							ef.write(nothing)
+						elif "text" in response_ct:
+							if not request['request_payload']: 
+								ef.write(emptypayload)
+						else:
+							if not request['request_payload']: 
+								ef.write(emptypayload)
 					else:
 						ef.write(nothing)
 				else:
-					ef.write(nothing)			
+					ef.write(nothing)	
+			else:
+				ef.write(nothing)						
 		else:
 			ef.write(nothing)
 		ef.close()		

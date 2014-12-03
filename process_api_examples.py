@@ -3,7 +3,8 @@
 # Read the IT tests log file
 # Identify the requests with status 204 or 200
 # Create a file name by replacing numbers and long bits of the URL
-# Save the requests to a text file inside a code block
+# Save the requests with a nominal invented curl, status code and request and response payload
+# Writes a file with storage format
 
 
 import json
@@ -12,6 +13,10 @@ import ast
 import re
 import xml.dom.minidom
 import os.path
+import cgi
+from lxml import etree
+from StringIO import StringIO
+from io import BytesIO
 
  
 def print_line(line):
@@ -38,6 +43,10 @@ def open_if_not_existing(filename):
 
 def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 #   request = yaml.load(line)
+	code_header = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA['
+	code_footer = ']]></ac:plain-text-body></ac:macro>'
+
+
 	request = json.loads(line)
 	if request['status'] < 400:
 	# write the request to a file, but if there are already queries from this run, append numbers to the files
@@ -45,48 +54,161 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 		ex_file_name_plus_dir = os.path.join(output_subdir,ex_file_name)
 
 		# Append an X to the list... number of X-es = number of files created!!! this is really dodgy!!!
- 		files_dictionary.setdefault(ex_file_name_plus_dir,[]).append("X")
- 		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) 
+		files_dictionary.setdefault(ex_file_name_plus_dir,[]).append("X")
+		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) 
+		# Pad the integer so that the files are nicely named
+		example_file_name = ex_file_name_plus_dir + "." + "{0:04d}".format(number_of_files) + ".txt"
 
- 		# Pad the integer so that the files are nicely named
- 		example_file_name = ex_file_name_plus_dir + "." + "{0:04d}".format(number_of_files) + ".txt"
+		# Check that it doesn't already exist and open the file for writing
+		ef = open_if_not_existing(example_file_name)
+
+		abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + ex_file_name + '</ac:rich-text-body></ac:macro>'
+		ef.write(abiheader)
+		hcurl = "<p><strong>cURL</strong>:</p>"
+		ef.write(hcurl)
+		ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + " \\ \n"
+		ef.write(ccurl1)
+		
+		request_head = request['request_headers']
+		ccurl2 = ""	
 
 
- 		# Check that it doesn't already exist and open the file for writing
- 		ef = open_if_not_existing(example_file_name)
+		if 'Accept' in request_head:
+			accept = request_head['Accept']
+			accept_ascii = accept[0].encode('ascii')
+			if re.search(r'abiquo',accept_ascii):
+				ccurl2 = "\t -H 'Accept: %s; version=3.2' \\ \n" % accept_ascii 
+			else:
+				ccurl2 = "\t -H 'Accept: %s;' \\ \n" % accept_ascii	
+		ef.write(ccurl2)
+		ccurl3 = ""
+		ccurl4 = ""
+		if 'Content-Type' in request_head:
+			content_type = request_head['Content-Type']
+			content_type_ascii = content_type[0].encode('ascii')
+			if re.search(r'abiquo',content_type_ascii):
+ 				ccurl3 = "\t -H 'Content-Type: %s; version=3.2' \\ \n" % content_type_ascii
+ 			else: 
+ 				ccurl3 = "\t -H 'Content-Type: %s;' \\ \n" % content_type_ascii 	
+ 			ccurl4 = "\t -d @requestpayload.xml \\ \n"	
+ 		ef.write(ccurl3)
+ 		ef.write(ccurl4)
 
- 		mets = "Method: %s" % request['method'] # string
- 		ef.write(mets)
-		urls = "URL: %s" % request['url'] # string
-		ef.write(urls)
-		stat = "Status: %s" % request['status'] # int
+		ccurl5 = '\t -u user:password --verbose ]]></ac:plain-text-body></ac:macro>'	
+		ef.write(ccurl5)
+# 		mets = "*Method: %s \n" % request['method'] # string
+# 		ef.write(mets)
+#		urls = "<strong>URL:</strong> %s \n" % request['url'] # string
+#		ef.write(urls)
+		stat = "<p><strong>Success status code</strong>: %s </p>" % request['status'] # int
 		ef.write(stat)
-		reqh = "Request headers: %s" % request['request_headers'] # It's a JSON dictionary
-		ef.write(reqh)
 		response_head = request['response_headers']
-		resh = "Response headers: %s" % request['response_headers'] # It's a JSON dictionary
-		ef.write(resh)
-		reqp = "Request payload: %s" % request['request_payload'] # A JSON or an XML, inspect request Content-Type header
-		ef.write(reqp)
-	#	print "Response payload: %s" % request['response_payload']  # A JSON or an XML, inspect response Content-Type header
-		content_type_list = response_head['Content-Type']
-		if content_type_list:
-			content_type = content_type_list[0]
-			if content_type:
-				ef.write ("<strong>Response payload:</strong>")
-				header = '<div class="preformatted panel" style="border-width: 1px;"><div class="preformattedContent panelContent"><pre>'
-				ef.write (header)
-				if "json" in content_type:
-					json_payload = yaml.load(request['response_payload'])
-					resp_json = json.dumps(json_payload, sort_keys=False, indent=2)
-					ef.write (resp_json)
-				if "xml" in content_type:
-					xml_payload = xml.dom.minidom.parseString(request['response_payload'])
-					pretty_xml = xml_payload.toprettyxml()
-					resp_xml = cgi.escape(pretty_xml).encode('ascii', 'xmlcharrefreplace')
-					ef.write(resp_xml)
-				footer = '</pre></div></div>'
-				ef.write (footer)	
+#		reqh = "Request headers: %s" % request['request_headers'] # It's a JSON dictionary
+		nothing = "<p>--none--</p>" 
+		emptypayload = "<p>--empty--</p>"
+		reqh = "<p><strong>Request payload</strong>:</p>"
+		ef.write (reqh)
+
+		if 'Content-Type' in request_head:
+			content_type_list = request_head['Content-Type']
+			if content_type_list:
+				content_type = content_type_list[0]
+				if content_type:
+					if "json" in content_type:
+						json_request_payload = ""
+						json_request_payload = yaml.load(request['request_payload'])		
+						reqp_json = ""
+						reqp_json = json.dumps(json_request_payload, sort_keys=False, indent=2)
+						if reqp_json:
+							ef.write (code_header)
+							ef.write (reqp_json)
+							ef.write (code_footer)
+						else:
+							ef.write(emptypayload)	
+					elif "xml" in content_type:
+						if request['request_payload']:
+							print "request_payload 0: %s" % request['request_payload']
+							xml_request_payload = request['request_payload'].encode('ascii')
+							if xml_request_payload:
+								pretty_xml_request = xml_request_payload
+								ef.write (code_header)
+								try:
+									valid_xml_request = etree.fromstring(xml_request_payload)
+									pretty_xml_request = etree.tostring(valid_xml_request, pretty_print=True)	
+									print "Request payload is well formed"
+								except Exception, e:
+									print "Exception: XML was not well formed and could not be pretty printed!"
+								ef.write (pretty_xml_request)
+								ef.write (code_footer)	
+							else:
+								print "No content in request payload"
+								ef.write(emptypayload)
+						else:	
+							ef.write(nothing)
+					elif "text" in content_type:
+						if not request['request_payload']: 
+							ef.write(emptypayload)
+					else:
+						ef.write(nothing)
+				else:
+					ef.write(nothing)		
+		else:
+			ef.write(nothing)	
+
+		resh = "<p><strong>Response payload</strong>:</p>"
+		ef.write (resh)
+#		accept_type_list = request_head['Accept']
+		if 	request['status'] != 204:
+			if 'Content-Type' in response_head:
+				response_ct_list = response_head['Content-Type']
+				if response_ct_list:
+					response_ct = response_ct_list[0]
+					if response_ct:
+						if "json" in response_ct:
+							json_response_payload = ""
+							json_response_payload = yaml.load(request['response_payload'])	
+							resp_json = ""
+							resp_json = json.dumps(json_response_payload, sort_keys=False, indent=2)
+							if resp_json:
+								ef.write (code_header)
+								ef.write (resp_json)
+								ef.write (code_footer)
+							else:
+								ef.write (emptypayload)
+						elif "xml" in response_ct:
+							if request['response_payload']:
+								ef.write (code_header)
+								print "response_payload 0: %s" % request['response_payload']
+								xml_response_payload = request['response_payload'].encode('ascii')
+								if xml_response_payload:
+									pretty_xml_response = xml_response_payload
+									try:
+										valid_xml_response = etree.fromstring(xml_response_payload)
+										pretty_xml_response = etree.tostring(valid_xml_response, pretty_print=True)
+										print "Response payload is well-formed"
+									except Exception, e:
+										print "Exception: XML could not be pretty printed!"	
+									ef.write (pretty_xml_response)
+									ef.write (code_footer)
+								else:
+									print "No content in response payload"
+									ef.write(emptypayload)
+							else:	
+								ef.write(nothing)
+						elif "text" in response_ct:
+							if not request['request_payload']: 
+								ef.write(emptypayload)
+						else:
+							if not request['request_payload']: 
+								ef.write(emptypayload)
+					else:
+						ef.write(nothing)
+				else:
+					ef.write(nothing)	
+			else:
+				ef.write(nothing)						
+		else:
+			ef.write(nothing)
 		ef.close()		
 
 def print_summary_line(line):
@@ -132,7 +254,7 @@ def rep_text(text,abbreviation):
 
 
 def main():
-	output_subdir = "test_files"	
+	output_subdir = "storage_format_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links
 	abbreviations = {}

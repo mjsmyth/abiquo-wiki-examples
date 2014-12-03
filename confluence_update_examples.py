@@ -102,7 +102,7 @@ def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId
 def get_content_file_names():
 	# read all number 0001 pages in the directory
 #	mypath = "storage_format_files/*.0001.txt"
-	mypath = "stor/*.0001.txt"
+	mypath = "big/*.0001.txt"
 	onlyfiles = glob.glob(mypath)
 	pagenames = []
 
