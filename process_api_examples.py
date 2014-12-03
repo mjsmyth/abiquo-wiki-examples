@@ -75,7 +75,6 @@ def process_payload(mediatype,payload):
 			valid_xml = ""	
 		try:		
 			pretty_xml = etree.tostring(valid_xml, pretty_print=True)	
-			print "Request payload is well formed"
 		except Exception:
 			print "Exception: XML was not well formed and could not be pretty printed!"
 			pretty_xml = valid_xml
@@ -95,17 +94,23 @@ def process_headers(raw_request_head,raw_response_head):
 	if 'Accept' in raw_request_head:
 		request_acc_list = raw_request_head['Accept']
 		if request_acc_list:
-			request_acc = request_acc_list[0].encode('ascii')
+			request_acc = request_acc_list[0]
+			if request_acc:
+				request_acc = request_acc.encode('ascii')
 
-	if 'Content-Type' in request_head:
-		request_ct_list = request_head['Content-Type']
+	if 'Content-Type' in raw_request_head:
+		request_ct_list = raw_request_head['Content-Type']
 		if request_ct_list:
-			request_ct = request_ct_list[0].encode('ascii')
+			request_ct = request_ct_list[0]
+			if request_ct:
+				request_ct = request_ct.encode('ascii')
 
 	if 'Content-Type' in raw_response_head:
 		response_ct_list = raw_response_head['Content-Type']
 		if response_ct_list:
-			response_ct = response_ct_list[0].encode('ascii')			
+			response_ct = response_ct_list[0]
+			if response_ct:
+				response_ct = response_ct.encode('ascii')			
 	hedrs = allheaders(request_acc,request_ct,response_ct)
 	return hedrs
 
@@ -176,34 +181,35 @@ def pretty_print_line(output_subdir,ex_file_name,line,files_dictionary):
 		reqh = "<p><strong>Request payload</strong>:</p>"
 		ef.write (reqh)
 
-		
 		if hdrs.reqCT:
-			pretty_payload = ""
-			pretty_payload = process_payload(content_type,request['request_payload'])
-			if pretty_payload:
-				ef.write (code_header)
-				ef.write (pretty_payload)
-				ef.write (code_footer)
+			if request['request_payload']:
+				pretty_payload = ""
+				pretty_payload = process_payload(hdrs.reqCT,request['request_payload'])
+				if pretty_payload:
+					ef.write (code_header)
+					ef.write (pretty_payload)
+					ef.write (code_footer)
+				else:
+					ef.write (emptypayload)		
 			else:
-				ef.write (emptypayload)		
-		else:
-			ef.write(nothing)
+				ef.write(nothing)
 
 		resh = "<p><strong>Response payload</strong>:</p>"
 		ef.write (resh)
 #		accept_type_list = request_head['Accept']
 		if 	request['status'] != 204:
 			if hdrs.rspCT:
-				pretty_payload = ""
-				pretty_payload = process_payload(response_ct,request['response_payload'])
-				if pretty_payload:
-					ef.write (code_header)
-					ef.write (pretty_payload)
-					ef.write (code_footer)
+				if request['response_payload']:
+					pretty_payload = ""
+					pretty_payload = process_payload(hdrs.rspCT,request['response_payload'])
+					if pretty_payload:
+						ef.write (code_header)
+						ef.write (pretty_payload)
+						ef.write (code_footer)
+					else:
+						ef.write (emptypayload)
 				else:
-					ef.write (emptypayload)
-			else:
-				ef.write(nothing)
+					ef.write(nothing)
 		else:
 			ef.write(nothing)
 		ef.close()		
