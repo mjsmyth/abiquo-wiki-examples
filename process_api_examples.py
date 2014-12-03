@@ -250,14 +250,14 @@ def create_file_name(line,abbreviations,hdrs):
 	return example_file_name
 
 def rep_abbrev(text,abbreviations):
-	for abbi, abbr in abbreviations.iteritems():
+	for abbi, abbr in iter(sorted(abbreviations.iteritems(),reverse=True)):
 		text = text.replace(abbi,abbr)
-		text = re.sub("\*/\*","_any_")
+		text = re.sub("\*/\*","_any_",text)
 		text = re.sub("/","_",text)	
 	return text	
 
 def rep_text(text,abbreviations):
-	for abbi, abbr in abbreviations.iteritems():
+	for abbi, abbr in iter(sorted(abbreviations.iteritems(),reverse=True)):
 		text = text.replace(abbi,abbr)
 # If it's a storage pool name		
 	if "-" in text:
@@ -274,17 +274,33 @@ def rep_text(text,abbreviations):
 	return text
 
 
-
 def main():
 #	output_subdir = "storage_format_files"	
 	output_subdir = "test_files"	
 	files_dictionary = {}
-# Load a bunch of abbreviations to replace text and shorten links
+# Load a bunch of abbreviations to replace text and shorten links and mediatypes for filenames
 	abbreviations = {}
+	# abbreviations1 = {}
+	# abbreviations2 = {}
 	with open("abbreviations.json.txt") as afile:
-		abbrev_file = afile.read().replace('\n', '')	
-		abbreviations = ast.literal_eval(abbrev_file)
-#	print "Abbreviation for enterprise: %s" % abbreviations["enterprise"]	
+	 	abbrev_file = afile.read().replace('\n', '')
+		abbrev_file = abbrev_file.replace('\t', " ")
+		abbreviations = json.loads(abbrev_file)
+
+	# 	abbreviations1 = ast.literal_eval(abbrev_file)		
+	# with open("abbreviations_2.json.txt") as afile2:
+	# 	abbrev_file2 = afile2.read().replace('\n', '')	
+	# 	abbrev_file2 = abbrev_file2.replace('\t', " ")
+	# 	abbreviations2 = ast.literal_eval(abbrev_file2)
+	# with open("abbreviations_3.json.txt") as afile3:
+	# 	abbrev_file3 = afile3.read().replace('\n', '')	
+	# 	abbrev_file3 = abbrev_file3.replace('\t', " ")
+	# 	abbreviations3 = ast.literal_eval(abbrev_file3)
+	# with open("abbreviations_4.json.txt") as afile4:
+	# 	abbrev_file4 = afile4.read().replace('\n', '')	
+	# 	abbrev_file4 = abbrev_file4.replace('\t', " ")
+	# 	abbreviations4 = ast.literal_eval(abbrev_file4)	
+	# abbreviations = dict(abbrevations1.items() + abbreviations2.items() + abbreviations3.items() + abbreviations4.items())			
 
 	with open("requests.log") as file:
 		for line in file:
