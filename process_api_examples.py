@@ -78,7 +78,7 @@ def process_payload(mediatype,payload):
 		except Exception:
 			print "Exception: XML was not well formed and could not be pretty printed!"
 			pretty_xml = valid_xml
-		return pretty_xml
+		return pretty_xml	
 	
 	else:
 		weird_payload = ""
@@ -139,7 +139,10 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 		ef.write(abiheader)
 		hcurl = "<p><strong>cURL</strong>:</p>"
 		ef.write(hcurl)
-		ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + " \\ \n"
+		if request['query_params']:
+			ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + request['query_params'] + " \\ \n"	
+		else:
+			ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + " \\ \n"
 		ef.write(ccurl1)
 		
 		ccurl2 = ""	
@@ -179,7 +182,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 			if request['request_payload']:
 				pretty_payload = ""
 				pretty_payload = process_payload(hdrs.reqCT,request['request_payload'])
-				if pretty_payload:
+				if pretty_payload != "":
 					ef.write (code_header)
 					ef.write (pretty_payload)
 					ef.write (code_footer)
@@ -196,7 +199,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 				if request['response_payload']:
 					pretty_payload = ""
 					pretty_payload = process_payload(hdrs.rspCT,request['response_payload'])
-					if pretty_payload:
+					if pretty_payload != "":
 						ef.write (code_header)
 						ef.write (pretty_payload)
 						ef.write (code_footer)
@@ -237,22 +240,45 @@ def create_file_name(line,abbreviations,hdrs):
 	rep_url_list = []
 	print "Raw_url: %s" % raw_url
 	raw_url_list = raw_url.split("/")
-	for ruli in raw_url_list:
+	for ruli in raw_url_list[2:]:
 		ruli = rep_text(ruli,abbreviations)
 		rep_url_list.append(ruli)
-	example_file_name = raw_method + "_".join(rep_url_list) 
+	method = rep_text(raw_method,abbreviations)	
+	example_file_name = raw_method + "_" + "_".join(rep_url_list) 
 	if req_ct:
 		req_ct = rep_abbrev(req_ct,abbreviations)
 		example_file_name = example_file_name + "_CT_" + req_ct 
 	if rsp_ct:
 		rsp_ct = rep_abbrev(rsp_ct,abbreviations)
 		example_file_name = example_file_name + "_AC_" + rsp_ct	
+	rep_qp_list = []	
+	if request['query_params']:
+		query_params = request['query_params']
+		qpl = query_params.split("&")
+		for qidx, qp in enumerate(qpl):
+			if qp:
+				qpValuelist = qp.split("=")
+				qpName = qpValuelist[0]
+				print "qpName: %s" % qpName
+				qpValue = qpValuelist[1]
+				print "qpValue: %s " % qpValue
+				repQpName = rep_abbrev(qpName,abbreviations)
+				rep_qp_list.append(repQpName)
+				if qpValue == "true":
+					rep_qp_list.append('T')
+				if qpValue == "false":
+					rep_qp_list.append('F')
+				if qpName == "by":
+					rep_qp_list.append(qpValue)	
+	if rep_qp_list:			
+		example_file_name = example_file_name + "_" + "_".join(rep_qp_list)			
 	return example_file_name
+
 
 def rep_abbrev(text,abbreviations):
 	for abbi, abbr in iter(sorted(abbreviations.iteritems(),reverse=True)):
 		text = text.replace(abbi,abbr)
-		text = re.sub("\*/\*","_any_",text)
+		text = re.sub("\*/\*","any",text)
 		text = re.sub("/","_",text)	
 	return text	
 
@@ -285,22 +311,7 @@ def main():
 	with open("abbreviations.json.txt") as afile:
 	 	abbrev_file = afile.read().replace('\n', '')
 		abbrev_file = abbrev_file.replace('\t', " ")
-		abbreviations = json.loads(abbrev_file)
-
-	# 	abbreviations1 = ast.literal_eval(abbrev_file)		
-	# with open("abbreviations_2.json.txt") as afile2:
-	# 	abbrev_file2 = afile2.read().replace('\n', '')	
-	# 	abbrev_file2 = abbrev_file2.replace('\t', " ")
-	# 	abbreviations2 = ast.literal_eval(abbrev_file2)
-	# with open("abbreviations_3.json.txt") as afile3:
-	# 	abbrev_file3 = afile3.read().replace('\n', '')	
-	# 	abbrev_file3 = abbrev_file3.replace('\t', " ")
-	# 	abbreviations3 = ast.literal_eval(abbrev_file3)
-	# with open("abbreviations_4.json.txt") as afile4:
-	# 	abbrev_file4 = afile4.read().replace('\n', '')	
-	# 	abbrev_file4 = abbrev_file4.replace('\t', " ")
-	# 	abbreviations4 = ast.literal_eval(abbrev_file4)	
-	# abbreviations = dict(abbrevations1.items() + abbreviations2.items() + abbreviations3.items() + abbreviations4.items())			
+		abbreviations = json.loads(abbrev_file)		
 
 	with open("requests.log") as file:
 		for line in file:
