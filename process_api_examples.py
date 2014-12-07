@@ -131,11 +131,11 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) 
 		# Pad the integer so that the files are nicely named
 		example_file_name = ex_file_name_plus_dir + "." + "{0:04d}".format(number_of_files) + ".txt"
-
+		abiheader_file_name = ex_file_name + "." + "{0:04d}".format(number_of_files) + ".txt"
 		# Check that it doesn't already exist and open the file for writing
 		ef = open_if_not_existing(example_file_name)
 
-		abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + ex_file_name + '</ac:rich-text-body></ac:macro>'
+		abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + abiheader_file_name + '</ac:rich-text-body></ac:macro>'
 		ef.write(abiheader)
 		hcurl = "<p><strong>cURL</strong>:</p>"
 		ef.write(hcurl)
