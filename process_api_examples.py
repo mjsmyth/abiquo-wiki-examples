@@ -190,6 +190,8 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 					ef.write (emptypayload)		
 			else:
 				ef.write(nothing)
+		else:
+			ef.write(nothing)		
 
 		resh = "<p><strong>Response payload</strong>:</p>"
 		ef.write (resh)
@@ -207,6 +209,8 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 						ef.write (emptypayload)
 				else:
 					ef.write(nothing)
+			else:
+				ef.write(nothing)
 		else:
 			ef.write(nothing)
 		ef.close()		
