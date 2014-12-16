@@ -42,7 +42,6 @@
 	"costcode":"cc",
 	"currency":"curr",
 	"region":"reg",
-	"license":"lic",
 	"systemproperties":"sysprops",
 	"systemproperty":"sysprop",
 	"statistics":"stats",

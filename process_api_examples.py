@@ -17,6 +17,9 @@ import cgi
 from lxml import etree
 from StringIO import StringIO
 from io import BytesIO
+import logging
+
+
 
 class allheaders:
 	def __init__(self,aRequestAccept,aRequestContentType,aResponseContentType):
@@ -60,7 +63,8 @@ def process_payload(mediatype,payload):
 			pretty_json = json.dumps(json_payload, sort_keys=False, indent=2)
 		except:
 			pretty_json = ""
-			print "Exception: json payload - could not load payload with yaml or dump payload"			
+			logging.warning('Format exception: JSON payload - could not load payload with YAML or dump payload')
+		#	print "Exception: json payload - could not load payload with yaml or dump payload"			
 		return pretty_json
 			
 	elif "xml" in mediatype:
@@ -71,12 +75,14 @@ def process_payload(mediatype,payload):
 			xml_payload = payload.encode('ascii')
 			valid_xml = etree.fromstring(xml_payload)
 		except:
-			print "Exception: xml payload - could not validate the xml"
+			logging.warning('Format exception: XML payload - could not validate the XML')
+		#	print "Exception: xml payload - could not validate the xml"
 			valid_xml = ""	
 		try:		
 			pretty_xml = etree.tostring(valid_xml, pretty_print=True)	
 		except Exception:
-			print "Exception: XML was not well formed and could not be pretty printed!"
+			logging.warning('Format exception: XML was valid but not well formed and could not be pretty printed!')
+		#	print "Exception: XML was not well formed and could not be pretty printed!"
 			pretty_xml = valid_xml
 		return pretty_xml	
 	
@@ -87,6 +93,7 @@ def process_payload(mediatype,payload):
 
 
 def process_headers(raw_request_head,raw_response_head):
+	# Check for header content and put all headers in one convenient object
 	request_acc = ""
 	request_ct = ""
 	response_ct = ""
@@ -211,6 +218,12 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 			ef.write(nothing)
 		ef.close()		
 
+def log_summary_line(line):
+	request = json.loads(line)
+	logging.info("Method: %s" % request['method']) # string
+	logging.info("URL: %s" % request['url']) # string
+	logging.info("Status: %s" % request['status']) # int
+
 def print_summary_line(line):
 	request = json.loads(line)
 	print "Method: %s" % request['method'] # string
@@ -238,7 +251,8 @@ def create_file_name(line,abbreviations,hdrs):
 	req_ct = sub_media_type(hdrs.reqCT)
 	rsp_ct = sub_media_type(hdrs.rspCT)
 	rep_url_list = []
-	print "Raw_url: %s" % raw_url
+	logging.info("Raw_url: %s" % raw_url)
+	#print "Raw_url: %s" % raw_url
 	raw_url_list = raw_url.split("/")
 	for ruli in raw_url_list[2:]:
 		ruli = rep_text(ruli,abbreviations)
@@ -259,8 +273,10 @@ def create_file_name(line,abbreviations,hdrs):
 			if qp:
 				qpValuelist = qp.split("=")
 				qpName = qpValuelist[0]
+				logging.info("qpName: %s" % qpName)
 				print "qpName: %s" % qpName
 				qpValue = qpValuelist[1]
+				logging.info("qpValue: %s " % qpValue)
 				print "qpValue: %s " % qpValue
 				repQpName = rep_abbrev(qpName,abbreviations)
 				rep_qp_list.append(repQpName)
@@ -301,13 +317,16 @@ def rep_text(text,abbreviations):
 
 
 def main():
-#	output_subdir = "storage_format_files"	
+#	output_subdir = "storage_format_files"
+	logging.basicConfig(filename='api_examples.log',level=logging.DEBUG)
+#	logging.debug('This message should go to the log file')
+#	logging.info('So should this')
+#	logging.warning('And this, too')	
 	output_subdir = "test_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links and mediatypes for filenames
+# Do not replace the word license
 	abbreviations = {}
-	# abbreviations1 = {}
-	# abbreviations2 = {}
 	with open("abbreviations.json.txt") as afile:
 	 	abbrev_file = afile.read().replace('\n', '')
 		abbrev_file = abbrev_file.replace('\t', " ")
@@ -320,8 +339,9 @@ def main():
 			raw_response_headers = request['response_headers']
 			hdrs = process_headers(raw_request_headers,raw_response_headers)
 			ex_file_name = create_file_name(line,abbreviations,hdrs)
-			print "ex_file_name: %s" % ex_file_name
-#			print_summary_line(line)
+			logging.info('ex_file_name: %s' % ex_file_name)
+#			print "ex_file_name: %s" % ex_file_name
+			log_summary_line(line)
 			pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary)	
 #			ex_file = open(os.path.join(output_subdir,ex_file_name), 'w')	
 

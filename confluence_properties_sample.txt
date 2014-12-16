@@ -1,0 +1,12 @@
+{
+	"wikiUrl" : "http://URL:port",
+	"spaceKey" : "myspacekey",
+	"parentTitle" : "myExamplesParentPage",
+	"getForce" : "n",
+	"user" : "myusername",
+	"password" : "mypassword",
+	"getOverwrite" : "y",
+	"rawLog" : "requests.log",
+	"outputSubdir" : "example_files",
+	"prohibited" : "license"
+}
