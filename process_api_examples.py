@@ -138,11 +138,11 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) 
 		# Pad the integer so that the files are nicely named
 		example_file_name = ex_file_name_plus_dir + "." + "{0:04d}".format(number_of_files) + ".txt"
-
+		abiheader_file_name = ex_file_name + "." + "{0:04d}".format(number_of_files) + ".txt"
 		# Check that it doesn't already exist and open the file for writing
 		ef = open_if_not_existing(example_file_name)
 
-		abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + ex_file_name + '</ac:rich-text-body></ac:macro>'
+		abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + abiheader_file_name + '</ac:rich-text-body></ac:macro>'
 		ef.write(abiheader)
 		hcurl = "<p><strong>cURL</strong>:</p>"
 		ef.write(hcurl)
@@ -153,22 +153,22 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 		ef.write(ccurl1)
 		
 		ccurl2 = ""	
-
-		if re.search(r'abiquo',hdrs.reqAc):
+		if re.search('[a-z]',hdrs.reqAc):
 			ccurl2 = "\t -H 'Accept:%s' \\ \n" % hdrs.reqAc 
-		else:
-			ccurl2 = "\t -H 'Accept:%s' \\ \n" % hdrs.reqAc	
-
-		ef.write(ccurl2)
+			if re.search(r'abiquo',hdrs.reqAc):
+				if not re.search('version\=[0-9]\.[0-9]',hdrs.reqAc):
+					ccurl2 = "\t -H 'Accept:%s;version=3.2' \\ \n" % hdrs.reqAc
+			ef.write(ccurl2)
 		ccurl3 = ""
 		ccurl4 = ""
-		if re.search(r'abiquo',hdrs.reqCT):
+		if re.search('[a-z]',hdrs.reqCT):
 			ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT
-		else: 
-			ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT 	
- 		ccurl4 = "\t -d @requestpayload.xml \\ \n"	
- 		ef.write(ccurl3)
- 		ef.write(ccurl4)
+			if re.search(r'abiquo',hdrs.reqCT):
+				if not re.search('version\=[0-9]\.[0-9]',hdrs.reqCT): 
+					ccurl3 = "\t -H 'Content-Type:%s;version=3.2' \\ \n" % hdrs.reqCT 	
+			ccurl4 = "\t -d @requestpayload.xml \\ \n"	
+			ef.write(ccurl3)
+			ef.write(ccurl4)
 
 		ccurl5 = '\t -u user:password --verbose ]]></ac:plain-text-body></ac:macro>'	
 		ef.write(ccurl5)
@@ -197,6 +197,8 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 					ef.write (emptypayload)		
 			else:
 				ef.write(nothing)
+		else:
+			ef.write(nothing)		
 
 		resh = "<p><strong>Response payload</strong>:</p>"
 		ef.write (resh)
@@ -214,6 +216,8 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 						ef.write (emptypayload)
 				else:
 					ef.write(nothing)
+			else:
+				ef.write(nothing)
 		else:
 			ef.write(nothing)
 		ef.close()		
@@ -231,6 +235,7 @@ def print_summary_line(line):
 	print "Status: %s" % request['status'] # int
 
 def sub_media_type(mediatype):	
+# This function is used to replace the media type for the file name
 	if mediatype:
 		subbed_type = mediatype
 		subbed_type = re.sub("application/vnd\.abiquo\.","",subbed_type)

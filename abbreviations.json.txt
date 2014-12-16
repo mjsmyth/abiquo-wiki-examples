@@ -181,5 +181,7 @@
 	"granularity":"gran",
 	"sendmail":"smail",
 	"sendermail":"sdrmail",
-	"Password":"Pw"
+	"Password":"Pw",
+	"creationUser":"crUser",
+	"custommet":"custmet"
 }
