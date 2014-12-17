@@ -4,7 +4,14 @@
 # Force option overwrites manually updated pages
 # Compatible with: Python 2.7
 # TODO: parameterise input files directory and mediatype version number
-import sys, string, xmlrpclib, re, ast, glob, os
+import sys
+import string
+import xmlrpclib
+import re
+import ast
+import glob
+import os
+import logging
 from distutils.util import strtobool
 
 class wikiAuth:
@@ -24,8 +31,8 @@ def process_stringbool(userInput):
     try:
         return strtobool(userInput.lower())
     except ValueError:
+    	logging.warning('Invalid boolean property %s' % userInput)
         sys.stdout.write('Invalid boolean property')
-
 
 
 def get_properties_file():
@@ -33,10 +40,11 @@ def get_properties_file():
 	properties = {}
 	with open("confluence_properties.json.txt") as pfile:
 		prop_file = pfile.read().replace('\n', '')	
-		properties = ast.literal_eval(prop_file)
+		prop_file = prop_file.replace('\t', " ")
+		properties = json.loads(prop_file)
 		for ix, ick in enumerate(properties):
-			print "%d: %s - %s" % (ix,ick,properties[ick])
-	#	print "Abbreviation for enterprise: %s" % abbreviations["enterprise"]	
+#			print "%d: %s - %s" % (ix,ick,properties[ick])
+			logging.info("%d: %s - %s" % (ix,ick,properties[ick]))
 	wikiUrl = properties['wikiUrl']
 	spaceKey = properties['spaceKey']
 	parentTitle =  properties['parentTitle'] 
@@ -59,37 +67,57 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	try:	
 		page = server.confluence2.getPage(token, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
-		print "A fault occurred"
-		print "Fault code: %d" % err.faultCode
-		print "Fault string: %s " % err.faultString	
+		logging.info ("Fault code: %d" % err.faultCode)
+		logging.info ("Fault string: %s " % err.faultString)	
 	return page		
 	
 
 def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId):
 	# create or update pages as appropriate
 	token = server.confluence2.login(wikAuth.user, wikAuth.password)
+	alt_filename = ""
 	gotpage = get_page(wikAuth,wikLoc,pagetitle,server)
 	if gotpage:
-   		# check if another user has updated the page and don't overwrite
-   		modifier = gotpage['modifier']
-   		if modifier != wikAuth.user:
-   			print "The page %s was manually modified by %s" % (modifier,pagetitle)
-   			if force is True:
-   			   	print "Overwriting page %s, modified by %s" % (modifier,pagetitle)
-   			   	gotpage['content'] = newcontent
-   			   	token = server.confluence2.login(wikAuth.user, wikAuth.password)
-   				server.confluence2.storePage(token, gotpage) 			   	
-   			else:
-   				print "Not overwriting page %s, modifed by %s" % (modifier,pagetitle)  
-   		else:
-   			print "Overwriting page %s" % (pagetitle)	
-   			gotpage['content'] = newcontent	
-   			token = server.confluence2.login(wikAuth.user, wikAuth.password) 		
-   			server.confluence2.storePage(token, gotpage)
+		# check if the page in Confluence is the 0001 file - and if not, get the file for the different page
+		pgcontent = gotpage['content']
+		filename_searchstring = pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt"
+		# if there is a filename on the page
+		fnm = re.search(filename_searchstring,pgcontent):
+		if fnm:
+			if fnm.group(1) == "0001":
+				modifier = gotpage['modifier']
+				if modifier != wikAuth.user:
+				#	print "The page %s was manually modified by %s" % (modifier,pagetitle)
+					logging.info("The page %s was manually modified by %s" % (modifier,pagetitle))
+					if force is True:
+						logging.info("Forced overwrite of page %s, modified by %s" % (modifier,pagetitle))
+						#  	print "Forced overwrite of page %s, modified by %s" % (modifier,pagetitle)
+						gotpage['content'] = newcontent
+						token = server.confluence2.login(wikAuth.user, wikAuth.password)
+						server.confluence2.storePage(token, gotpage) 			   	
+					else:
+					#	print "Not overwriting page %s, modifed by %s" % (modifier,pagetitle)
+						logging.info("Not overwriting page %s, modifed by %s" % (modifier,pagetitle))  
+				else:
+					logging.info("Page has not been manually modified, overwriting page %s" % (pagetitle))
+					# print "Overwriting page %s" % (pagetitle)	
+					gotpage['content'] = newcontent	
+					token = server.confluence2.login(wikAuth.user, wikAuth.password) 		
+					server.confluence2.storePage(token, gotpage)
+			else:	
+				alt_filename = fnm.group(0)
+				logging.info("The page: %s uses file: %s " % (pagetitle,alt_filename))
+			  	# if group 1 is not 0001, use the alternative filename
+		else:
+		# if there is no valid filename in the file, then the file has a manual update 		
+   		# don't overwrite it
+   			logging.info("The page: %s has been manually modified and will not be updated" % pagetitle)
+
    	else:
-		print "Creating new page %s" % (pagetitle)
+	#	print "Creating new page %s" % (pagetitle)
+		logging.info ("Creating new page %s" % (pagetitle))
 		newpage = {}
-		print "parentId: %s" % (parentId)
+	#	print "parentId: %s" % (parentId)
 		newpage['space'] = wikLoc.spaceKey
 		newpage['parentId'] = parentId
 		newpage['title'] = pagetitle
@@ -99,24 +127,48 @@ def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId
 		server.confluence2.storePage(token, newpage)
    		# create a new page
 
+def trim_file_glob(globPath):
+	pathfiles = glob.glob(globPath)
+	pgnames = []
+	for pff in pathfiles:
+		pf_path, pf = os.path.split(pff)
+		ffpg = pf.split(".")
+		fpg = ffpg[0]
+		pgnames.append(fpg)
+		logging.info("Full file path: %s and page name: %s " % (pff,fpg))
+	return(pathfiles,pgnames)
+
 def get_content_file_names():
 	# read all number 0001 pages in the directory
-	mypath = "test_files/*.0001.txt"
-#	mypath = "big/*.0001.txt"
-	onlyfiles = glob.glob(mypath)
+	# mypath = "big/*.0001.txt"
+	# # get the files and only take the first part of the name without the 0001.txt
+	mypath = input_subdir + "/*.0001.txt"
+	(onlyfiles,pagenames) = trim_file_glob(mypath)
 	pagenames = []
+	# read all the license files in the directory to avoid them
+	licpath = input_subdir + "/*license*"
+	(licfiles,licpagenames) = trim_file_glob(licpath)
+	return(onlyfiles,pagenames,licfiles,licpagenames)
 
-	# get the files and only take the first part of the name
-	print "Only files:"
-	for onff in onlyfiles:
-		print "original: %s " % onff
-		onff_path, onf = os.path.split(onff)
-		print "trimmed: %s " % onf
-		myff = onf.split(".")
-		myf = myff[0]
-		print "trimmed: %s " % myf
-		pagenames.append(myf)
-	return(onlyfiles,pagenames)
+
+	# print "Only files:"
+	# for onff in onlyfiles:
+	# 	print "original: %s " % onff
+	# 	onff_path, onf = os.path.split(onff)
+	# 	print "trimmed: %s " % onf
+	# 	myff = onf.split(".")
+	# 	myf = myff[0]
+	# 	print "trimmed: %s " % myf
+	# 	pagenames.append(myf)
+	# for lpff in licfiles:
+	# 	print "original: %s " % lpff
+	# 	lpff_path, lpf = os.path.split(lpff)
+	# 	print "trimmed: %s " % lpf
+	# 	myll = lpf.split(".")
+	# 	myl = myll[0]
+	# 	print "trimmed: %s " % myl
+	# 	licpagenames.append(myl)	
+
 
 # space = page['space']
 # print "space: %s " % space
@@ -128,23 +180,26 @@ def get_content_file_names():
 # print "id: %s " % pageid
 
 def main():
+	logging.basicConfig(filename='confluence_update_examples.log',level=logging.DEBUG)
 	# load properties file with wiki properties
 	(loc,auth,force,server) = get_properties_file()
 	# retrieve the parent page where the pages will be stored and get its ID
 	parentPage = get_page(auth,loc,loc.parentTitle,server)
 	parentId = parentPage['id']
 	# retrieve the content of the files to create as pages
-	(filenames,pagenames) = get_content_file_names()
+	(filenames,pagenames,licfilenames,licpgnames) = get_content_file_names()
 	for idx, pagen in enumerate(pagenames):
-		ncf = open(filenames[idx],'r')	
-		newcontent = ncf.read()
-		# create or update pages
-		try:
-			create_update_page(auth,loc,force,pagen,newcontent,server,parentId)
-		except:
-			print "oops - %s " % pagen
-		ncf.close()
-
+		if pagen not in licpgnames:
+			ncf = open(filenames[idx],'r')	
+			newcontent = ncf.read()
+			# create or update pages
+			try:
+				create_update_page(auth,loc,force,pagen,newcontent,server,parentId)
+			except:
+				logging.warning ("Could not update page - %s " % pagen)
+			ncf.close()
+		else:
+			logging.info ("Page contains license - %s " % pagen)	
 
 # Calls the main() function
 if __name__ == '__main__':

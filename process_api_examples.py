@@ -44,7 +44,7 @@ def open_if_not_existing(filename):
     try:
         fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except:
-        print "Ooops"
+		logging.warning("File: %s already exists" % filename)
         return None
     fobj = os.fdopen(fd, "w")
     return fobj
@@ -91,33 +91,25 @@ def process_payload(mediatype,payload):
 		weird_payload = payload.encode('ascii')
 		return weird_payload
 
+def process_headers_accept_content_type(raw_actp,raw_head):
+	ctp = ""
+	if raw_actp in raw_head:
+		ctp_list = raw_head[ctp]
+		if ctp_list:
+			ctp = ctp_list[0]
+			if ctp:
+				ctp = ctp.encode('ascii')
+	return ctp
+
 
 def process_headers(raw_request_head,raw_response_head):
 	# Check for header content and put all headers in one convenient object
 	request_acc = ""
 	request_ct = ""
 	response_ct = ""
-
-	if 'Accept' in raw_request_head:
-		request_acc_list = raw_request_head['Accept']
-		if request_acc_list:
-			request_acc = request_acc_list[0]
-			if request_acc:
-				request_acc = request_acc.encode('ascii')
-
-	if 'Content-Type' in raw_request_head:
-		request_ct_list = raw_request_head['Content-Type']
-		if request_ct_list:
-			request_ct = request_ct_list[0]
-			if request_ct:
-				request_ct = request_ct.encode('ascii')
-
-	if 'Content-Type' in raw_response_head:
-		response_ct_list = raw_response_head['Content-Type']
-		if response_ct_list:
-			response_ct = response_ct_list[0]
-			if response_ct:
-				response_ct = response_ct.encode('ascii')			
+	request_acc = process_headers_accept_content_type('Accept',raw_request_head)
+	request_ct = process_headers_accept_content_type('Content-Type',raw_request_head)
+	response_ct = process_headers_accept_content_type('Content-Type',raw_response_head)	
 	hedrs = allheaders(request_acc,request_ct,response_ct)
 	return hedrs
 
@@ -133,7 +125,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 
 		ex_file_name_plus_dir = os.path.join(output_subdir,ex_file_name)
 
-		# Append an X to the list... number of X-es = number of files created!!! this is really dodgy!!!
+		# Append an X to the list... number of X-es = number of files created! I'm sure there's a better way to count them :-)
 		files_dictionary.setdefault(ex_file_name_plus_dir,[]).append("X")
 		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) 
 		# Pad the integer so that the files are nicely named
@@ -141,6 +133,9 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 		abiheader_file_name = ex_file_name + "." + "{0:04d}".format(number_of_files) + ".txt"
 		# Check that it doesn't already exist and open the file for writing
 		ef = open_if_not_existing(example_file_name)
+		if not ef:
+			logging.warning("File %s already exists" % example_file_name)
+			sys.stdout.write('File %s already exists' % example_file_name)
 
 		abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + abiheader_file_name + '</ac:rich-text-body></ac:macro>'
 		ef.write(abiheader)
@@ -320,6 +315,18 @@ def rep_text(text,abbreviations):
 		text = "TYPE"		
 	return text
 
+def get_properties_file():
+	# Load properties for the scripts, including wiki properties that can't be stored in a public repo
+	properties = {}
+	with open("confluence_properties.json.txt") as pfile:
+		prop_file = pfile.read().replace('\n', '')	
+		prop_file = prop_file.replace('\t', " ")
+		properties = json.loads(prop_file)
+		for ix, ick in enumerate(properties):
+#			print "%d: %s - %s" % (ix,ick,properties[ick])
+			logging.info("%d: %s - %s" % (ix,ick,properties[ick]))
+		output_subdir = properties['outputSubdir']
+		return (output_subdir)
 
 def main():
 #	output_subdir = "storage_format_files"
@@ -327,7 +334,8 @@ def main():
 #	logging.debug('This message should go to the log file')
 #	logging.info('So should this')
 #	logging.warning('And this, too')	
-	output_subdir = "test_files"	
+	(output_subdir) = get_properties_file()
+	#output_subdir = "test_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links and mediatypes for filenames
 # Do not replace the word license

@@ -2,7 +2,7 @@
 	"wikiUrl" : "http://URL:port",
 	"spaceKey" : "myspacekey",
 	"parentTitle" : "myExamplesParentPage",
-	"getForce" : "n",
+	"confluenceForcePageUpdate" : "n",
 	"user" : "myusername",
 	"password" : "mypassword",
 	"getOverwrite" : "y",
