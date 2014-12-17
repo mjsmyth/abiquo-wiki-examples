@@ -41,13 +41,13 @@ def print_line(line):
 
 
 def open_if_not_existing(filename):
-    try:
-        fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except:
+	try:
+		fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+	except:
 		logging.warning("File: %s already exists" % filename)
-        return None
-    fobj = os.fdopen(fd, "w")
-    return fobj
+		return None
+	fobj = os.fdopen(fd, "w")
+	return fobj
 
 
 def process_payload(mediatype,payload):
@@ -91,15 +91,15 @@ def process_payload(mediatype,payload):
 		weird_payload = payload.encode('ascii')
 		return weird_payload
 
-def process_headers_accept_content_type(raw_actp,raw_head):
-	ctp = ""
-	if raw_actp in raw_head:
-		ctp_list = raw_head[ctp]
-		if ctp_list:
-			ctp = ctp_list[0]
-			if ctp:
-				ctp = ctp.encode('ascii')
-	return ctp
+def process_headers_act(raw_actp,raw_head):
+	rctp = ""
+#	rctp = "\'" + raw_actp + "\'"
+	ctp_list = raw_head[raw_actp]
+	if ctp_list:
+		rctp = ctp_list[0]
+		if rctp:
+			rctp = rctp.encode('ascii')
+	return rctp
 
 
 def process_headers(raw_request_head,raw_response_head):
@@ -107,9 +107,14 @@ def process_headers(raw_request_head,raw_response_head):
 	request_acc = ""
 	request_ct = ""
 	response_ct = ""
-	request_acc = process_headers_accept_content_type('Accept',raw_request_head)
-	request_ct = process_headers_accept_content_type('Content-Type',raw_request_head)
-	response_ct = process_headers_accept_content_type('Content-Type',raw_response_head)	
+	aaa = "Accept"
+	ccc = "Content-Type"
+	if aaa in raw_request_head:
+		request_acc = process_headers_act(aaa,raw_request_head)
+	if ccc in raw_request_head:	
+		request_ct = process_headers_act(ccc,raw_request_head)
+	if ccc in raw_response_head:	
+		response_ct = process_headers_act(ccc,raw_response_head)	
 	hedrs = allheaders(request_acc,request_ct,response_ct)
 	return hedrs
 
@@ -230,7 +235,7 @@ def print_summary_line(line):
 	print "Status: %s" % request['status'] # int
 
 def sub_media_type(mediatype):	
-# This function is used to replace the media type for the file name
+# This function is used to create a reduced media type for the file name
 	if mediatype:
 		subbed_type = mediatype
 		subbed_type = re.sub("application/vnd\.abiquo\.","",subbed_type)
@@ -274,10 +279,10 @@ def create_file_name(line,abbreviations,hdrs):
 				qpValuelist = qp.split("=")
 				qpName = qpValuelist[0]
 				logging.info("qpName: %s" % qpName)
-				print "qpName: %s" % qpName
+				# print "qpName: %s" % qpName
 				qpValue = qpValuelist[1]
 				logging.info("qpValue: %s " % qpValue)
-				print "qpValue: %s " % qpValue
+				# print "qpValue: %s " % qpValue
 				repQpName = rep_abbrev(qpName,abbreviations)
 				rep_qp_list.append(repQpName)
 				if qpValue == "true":
@@ -325,8 +330,9 @@ def get_properties_file():
 		for ix, ick in enumerate(properties):
 #			print "%d: %s - %s" % (ix,ick,properties[ick])
 			logging.info("%d: %s - %s" % (ix,ick,properties[ick]))
-		output_subdir = properties['outputSubdir']
-		return (output_subdir)
+		output_subdir = properties['subdir']
+		rawLog = properties['rawLog']
+		return (output_subdir,rawLog)
 
 def main():
 #	output_subdir = "storage_format_files"
@@ -334,7 +340,7 @@ def main():
 #	logging.debug('This message should go to the log file')
 #	logging.info('So should this')
 #	logging.warning('And this, too')	
-	(output_subdir) = get_properties_file()
+	(output_subdir,rawLog) = get_properties_file()
 	#output_subdir = "test_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links and mediatypes for filenames
@@ -345,7 +351,7 @@ def main():
 		abbrev_file = abbrev_file.replace('\t', " ")
 		abbreviations = json.loads(abbrev_file)		
 
-	with open("requests.log") as file:
+	with open(rawLog) as file:
 		for line in file:
 			request = yaml.load(line)
 			raw_request_headers = request['request_headers']
@@ -355,6 +361,7 @@ def main():
 			logging.info('ex_file_name: %s' % ex_file_name)
 #			print "ex_file_name: %s" % ex_file_name
 			log_summary_line(line)
+			# Note an empty output directory must exist ! (should sort this out)
 			pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary)	
 #			ex_file = open(os.path.join(output_subdir,ex_file_name), 'w')	
 

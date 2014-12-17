@@ -5,6 +5,7 @@
 # Compatible with: Python 2.7
 # TODO: parameterise input files directory and mediatype version number
 import sys
+import json
 import string
 import xmlrpclib
 import re
@@ -48,7 +49,7 @@ def get_properties_file():
 	wikiUrl = properties['wikiUrl']
 	spaceKey = properties['spaceKey']
 	parentTitle =  properties['parentTitle'] 
-	getforce = properties['getForce']
+	getforce = properties['confluenceForcePageUpdate']
 	force = process_stringbool(getforce)
 	user = properties['user']
 	password = properties['password']
@@ -56,7 +57,8 @@ def get_properties_file():
 	server = xmlrpclib.ServerProxy(wikiUrl + '/rpc/xmlrpc')
 	token = server.confluence2.login(user, password)
 	wauth = wikiAuth(user,password,token)
-	return (wloc,wauth,force,server)
+	subdir = properties['subdir']
+	return (wloc,wauth,force,server,subdir)
 
 
 
@@ -67,8 +69,8 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	try:	
 		page = server.confluence2.getPage(token, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
-		logging.info ("Fault code: %d" % err.faultCode)
-		logging.info ("Fault string: %s " % err.faultString)	
+		logging.info ("Confluence fault code: %d and string: %s " % (err.faultCode,err.faultString))
+#		logging.info ("Confluence string: %s " % err.faultString)	
 	return page		
 	
 
@@ -82,7 +84,7 @@ def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId
 		pgcontent = gotpage['content']
 		filename_searchstring = pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt"
 		# if there is a filename on the page
-		fnm = re.search(filename_searchstring,pgcontent):
+		fnm = re.search(filename_searchstring,pgcontent)
 		if fnm:
 			if fnm.group(1) == "0001":
 				modifier = gotpage['modifier']
@@ -138,15 +140,15 @@ def trim_file_glob(globPath):
 		logging.info("Full file path: %s and page name: %s " % (pff,fpg))
 	return(pathfiles,pgnames)
 
-def get_content_file_names():
+def get_content_file_names(inputSubdir):
 	# read all number 0001 pages in the directory
 	# mypath = "big/*.0001.txt"
 	# # get the files and only take the first part of the name without the 0001.txt
-	mypath = input_subdir + "/*.0001.txt"
+	mypath = inputSubdir + "/*.0001.txt"
 	(onlyfiles,pagenames) = trim_file_glob(mypath)
 	pagenames = []
 	# read all the license files in the directory to avoid them
-	licpath = input_subdir + "/*license*"
+	licpath = inputSubdir + "/*license*"
 	(licfiles,licpagenames) = trim_file_glob(licpath)
 	return(onlyfiles,pagenames,licfiles,licpagenames)
 
@@ -182,14 +184,19 @@ def get_content_file_names():
 def main():
 	logging.basicConfig(filename='confluence_update_examples.log',level=logging.DEBUG)
 	# load properties file with wiki properties
-	(loc,auth,force,server) = get_properties_file()
+	(loc,auth,force,server,inputSubdir) = get_properties_file()
 	# retrieve the parent page where the pages will be stored and get its ID
-	parentPage = get_page(auth,loc,loc.parentTitle,server)
-	parentId = parentPage['id']
+	titleParent = loc.parentTitle 
+	parentPage = get_page(auth,loc,titleParent,server)
+	if parentPage:
+		print "Hello "
+		parentId = parentPage['id']
 	# retrieve the content of the files to create as pages
-	(filenames,pagenames,licfilenames,licpgnames) = get_content_file_names()
+	(filenames,pagenames,licfilenames,licpgnames) = get_content_file_names(inputSubdir)
 	for idx, pagen in enumerate(pagenames):
-		if pagen not in licpgnames:
+		if 'license' in pagen:
+			logging.info ("Page contains license - %s " % pagen)
+		else:	
 			ncf = open(filenames[idx],'r')	
 			newcontent = ncf.read()
 			# create or update pages
@@ -198,8 +205,6 @@ def main():
 			except:
 				logging.warning ("Could not update page - %s " % pagen)
 			ncf.close()
-		else:
-			logging.info ("Page contains license - %s " % pagen)	
 
 # Calls the main() function
 if __name__ == '__main__':
