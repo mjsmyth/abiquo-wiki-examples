@@ -27,9 +27,6 @@ class allheaders:
 		self.rspCT=aResponseContentType
 
 	def hprint(self):
-#        print_mt_accept = dowikimarkup(wiki_mt_accept)
-#        print_mt_content = dowikimarkup(wiki_mt_content)          
-#        print("| ",self.method_name," | ",self.url_long," | ",print_mt_accept," | ",print_mt_content, " |")	
 #		print "self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT)			
 		logging.debug ("self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT))
  
@@ -81,13 +78,11 @@ def process_payload(mediatype,payload):
 			valid_xml = etree.fromstring(xml_payload)
 		except:
 			logging.warning('Format exception: XML payload - could not validate the XML')
-		#	print "Exception: xml payload - could not validate the xml"
 			valid_xml = ""	
 		try:		
 			pretty_xml = etree.tostring(valid_xml, pretty_print=True)	
 		except Exception:
 			logging.warning('Format exception: XML was valid but not well formed and could not be pretty printed!')
-		#	print "Exception: XML was not well formed and could not be pretty printed!"
 			pretty_xml = valid_xml
 		return pretty_xml
 	
@@ -101,7 +96,6 @@ def process_headers_act(raw_actp,raw_head):
 	ctp = {}
 	if raw_actp in raw_head:		
 		rctp = raw_head[raw_actp][0]
-#		logging.info("Selected content type: %s - %s" % (raw_actp,str(rctp))) 
 	return rctp
 
 def process_headers(raw_request_head,raw_response_head):
@@ -134,6 +128,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 		ex_file_name_plus_dir = os.path.join(output_subdir,ex_file_name)
 
 		# Append an X to the list... number of X-es = number of files created! MEGA CUTRE! :-p
+		# I was practising initialising lists :-)
 		files_dictionary.setdefault(ex_file_name_plus_dir,[]).append("X")
 		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) 
 		# Pad the integer so that the files are nicely named
@@ -160,7 +155,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 			ccurl2 = "\t -H 'Accept:%s' \\ \n" % hdrs.reqAc 
 			if re.search(r'abiquo',hdrs.reqAc):
 				if not re.search('version\=[0-9]\.[0-9]',hdrs.reqAc):
-					ccurl2 = "\t -H 'Accept:%s;version=3.2' \\ \n" % hdrs.reqAc
+					ccurl2 = "\t -H 'Accept:%s;version=%s' \\ \n" % (hdrs.reqAc,MTversion)
 			ef.write(ccurl2)
 		ccurl3 = ""
 		ccurl4 = ""
@@ -170,7 +165,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 			ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT
 			if re.search(r'abiquo',hdrs.reqCT):
 				if not re.search('version\=[0-9]\.[0-9]',hdrs.reqCT): 
-					ccurl3 = "\t -H 'Content-Type:%s;version=3.2' \\ \n" % hdrs.reqCT 	
+					ccurl3 = "\t -H 'Content-Type:%s;version=%s' \\ \n" % (hdrs.reqCT,MTversion) 	
 			ccurl4 = "\t -d @requestpayload.%s \\ \n" % pt.group(0)
 			ef.write(ccurl3)
 			ef.write(ccurl4)
@@ -330,18 +325,14 @@ def get_properties_file():
 		prop_file = prop_file.replace('\t', " ")
 		properties = json.loads(prop_file)
 		for ick in (properties):
-#			print "%d: %s - %s" % (ix,ick,properties[ick])
 			logging.info("Property: %s : %s " % (ick,properties[ick]))
 		output_subdir = properties['subdir']
 		rawLog = properties['rawLog']
-		return (output_subdir,rawLog)
+		MTversion = properties['MTversion']
+		return (output_subdir,rawLog,MTversion)
 
 def main():
-#	output_subdir = "storage_format_files"
 	logging.basicConfig(filename='api_examples.log',level=logging.DEBUG)
-#	logging.debug('This message should go to the log file')
-#	logging.info('So should this')
-#	logging.warning('And this, too')	
 	(output_subdir,rawLog) = get_properties_file()
 	#output_subdir = "test_files"	
 	files_dictionary = {}

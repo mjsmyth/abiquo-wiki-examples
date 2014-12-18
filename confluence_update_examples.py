@@ -166,8 +166,7 @@ def main():
 	# load properties file with wiki properties
 	(loc,auth,force,server,inputSubdir) = get_properties_file()
 	# retrieve the parent page where the pages will be stored and get its ID
-	titleParent = loc.parentTitle 
-	parentPage = get_page(auth,loc,titleParent,server)
+	parentPage = get_page(auth,loc,loc.parentTitle,server)
 
 	if parentPage:
 	# I don't know how to handle this exception properly 
@@ -178,7 +177,7 @@ def main():
 		for idx, pagen in enumerate(pgenames):
 			print "pagen: %s " % pagen
 			if 'license' in pagen:
-				logging.info ("Page contains license - %s " % pagen)
+				logging.info ("Skipping page containing license - %s " % pagen)
 			else:	
 				ncf = open(filenames[idx],'r')	
 				newcontent = ncf.read()
@@ -189,7 +188,7 @@ def main():
 					logging.warning ("Could not update page - %s " % pagen)
 				ncf.close()
 	else:
-		print "Can't find the parent page"			
+		logging.warning ("Can't find the parent page %s" % loc.parentTitle)			
 # Calls the main() function
 if __name__ == '__main__':
 	main()

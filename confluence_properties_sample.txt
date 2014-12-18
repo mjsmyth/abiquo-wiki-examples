@@ -8,4 +8,5 @@
 	"getOverwrite" : "y",
 	"rawLog" : "requests.log",
 	"subdir" : "example_files",
+	"MTversion" : "3.2"
 }
