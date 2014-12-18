@@ -18,6 +18,7 @@ from lxml import etree
 from StringIO import StringIO
 from io import BytesIO
 import logging
+import sys
 
 
 class allheaders:
@@ -50,6 +51,97 @@ def open_if_not_existing(filename):
 		return None
 	fobj = os.fdopen(fd, "w")
 	return fobj
+
+
+def get_properties_file():
+	# Load properties for the scripts, including wiki properties that can't be stored in a public repo
+	properties = {}
+	with open("confluence_properties.json.txt") as pfile:
+		prop_file = pfile.read().replace('\n', '')	
+		prop_file = prop_file.replace('\t', " ")
+		properties = json.loads(prop_file)
+		for ick in (properties):
+			logging.info("Property: %s : %s " % (ick,properties[ick]))
+		output_subdir = properties['subdir']
+		rawLog = properties['rawLog']
+		MTversion = properties['MTversion']
+		return (output_subdir,rawLog,MTversion)
+
+
+def create_file_name(line,abbreviations,hdrs):
+#	request = json.loads(line)
+	request = yaml.load(line)
+	example_file_name = ""
+	raw_url = request['url']
+	raw_method = request['method']
+	req_acc = sub_media_type(hdrs.reqAc)
+	req_ct = sub_media_type(hdrs.reqCT)
+	rsp_ct = sub_media_type(hdrs.rspCT)
+	rep_url_list = []
+	logging.info("Raw_url: %s" % raw_url)
+	#print "Raw_url: %s" % raw_url
+	raw_url_list = raw_url.split("/")
+	for ruli in raw_url_list[2:]:
+		ruli = rep_text(ruli,abbreviations)
+		rep_url_list.append(ruli)
+	method = rep_text(raw_method,abbreviations)	
+	example_file_name = raw_method + "_" + "_".join(rep_url_list) 
+	if req_ct:
+		req_ct = rep_abbrev(req_ct,abbreviations)
+		example_file_name = example_file_name + "_CT_" + req_ct 
+	if rsp_ct:
+		rsp_ct = rep_abbrev(rsp_ct,abbreviations)
+		example_file_name = example_file_name + "_AC_" + rsp_ct	
+	rep_qp_list = []	
+	if request['query_params']:
+		query_params = request['query_params']
+		qpl = query_params.split("&")
+		for qidx, qp in enumerate(qpl):
+			if qp:
+				qpValuelist = qp.split("=")
+				qpName = qpValuelist[0]
+				logging.info("qpName: %s" % qpName)
+				# print "qpName: %s" % qpName
+				qpValue = qpValuelist[1]
+				logging.info("qpValue: %s " % qpValue)
+				# print "qpValue: %s " % qpValue
+				repQpName = rep_abbrev(qpName,abbreviations)
+				rep_qp_list.append(repQpName)
+				if qpValue == "true":
+					rep_qp_list.append('T')
+				if qpValue == "false":
+					rep_qp_list.append('F')
+				if qpName == "by":
+					rep_qp_list.append(qpValue)	
+	if rep_qp_list:			
+		example_file_name = example_file_name + "_" + "_".join(rep_qp_list)			
+	return example_file_name
+
+
+def rep_abbrev(text,abbreviations):
+	for abbi, abbr in iter(sorted(abbreviations.iteritems(),reverse=True)):
+		text = text.replace(abbi,abbr)
+		text = re.sub("\*/\*","any",text)
+		text = re.sub("/","_",text)	
+	return text	
+
+
+def rep_text(text,abbreviations):
+	for abbi, abbr in iter(sorted(abbreviations.iteritems(),reverse=True)):
+		text = text.replace(abbi,abbr)
+# If it's a storage pool name		
+	if "-" in text:
+		text = "X"
+# If it's an ID 	
+	if re.match("[0-9]",text):
+		text = "X"
+# If it's an entity with an underscore as an ID, e.g., request all enterprises but return only user enterprise if not cloud admin	
+	if text == "_":
+		text = "ALL"
+# If it's a hypervisor type or template type or public cloud region type, put TYPE		
+	if "_" in text:
+		text = "TYPE"		
+	return text
 
 
 def process_payload(mediatype,payload):
@@ -91,12 +183,14 @@ def process_payload(mediatype,payload):
 		weird_payload = payload.encode('ascii')
 		return weird_payload
 
+
 def process_headers_act(raw_actp,raw_head):
 	rctp = ""
 	ctp = {}
 	if raw_actp in raw_head:		
 		rctp = raw_head[raw_actp][0]
 	return rctp
+
 
 def process_headers(raw_request_head,raw_response_head):
 	# Check for header content and put all headers in one headers object
@@ -219,17 +313,20 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 			ef.write(nothing)
 		ef.close()		
 
+
 def log_summary_line(line):
 	request = json.loads(line)
 	logging.info("Method: %s" % request['method']) # string
 	logging.info("URL: %s" % request['url']) # string
 	logging.info("Status: %s" % request['status']) # int
 
+
 def print_summary_line(line):
 	request = json.loads(line)
 	print "Method: %s" % request['method'] # string
 	print "URL: %s" % request['url'] # string
 	print "Status: %s" % request['status'] # int
+
 
 def sub_media_type(mediatype):	
 # This function is used to create a reduced media type for the file name
@@ -243,97 +340,11 @@ def sub_media_type(mediatype):
 		subbed_type = ""		
 	return subbed_type
 
-def create_file_name(line,abbreviations,hdrs):
-#	request = json.loads(line)
-	request = yaml.load(line)
-	example_file_name = ""
-	raw_url = request['url']
-	raw_method = request['method']
-	req_acc = sub_media_type(hdrs.reqAc)
-	req_ct = sub_media_type(hdrs.reqCT)
-	rsp_ct = sub_media_type(hdrs.rspCT)
-	rep_url_list = []
-	logging.info("Raw_url: %s" % raw_url)
-	#print "Raw_url: %s" % raw_url
-	raw_url_list = raw_url.split("/")
-	for ruli in raw_url_list[2:]:
-		ruli = rep_text(ruli,abbreviations)
-		rep_url_list.append(ruli)
-	method = rep_text(raw_method,abbreviations)	
-	example_file_name = raw_method + "_" + "_".join(rep_url_list) 
-	if req_ct:
-		req_ct = rep_abbrev(req_ct,abbreviations)
-		example_file_name = example_file_name + "_CT_" + req_ct 
-	if rsp_ct:
-		rsp_ct = rep_abbrev(rsp_ct,abbreviations)
-		example_file_name = example_file_name + "_AC_" + rsp_ct	
-	rep_qp_list = []	
-	if request['query_params']:
-		query_params = request['query_params']
-		qpl = query_params.split("&")
-		for qidx, qp in enumerate(qpl):
-			if qp:
-				qpValuelist = qp.split("=")
-				qpName = qpValuelist[0]
-				logging.info("qpName: %s" % qpName)
-				# print "qpName: %s" % qpName
-				qpValue = qpValuelist[1]
-				logging.info("qpValue: %s " % qpValue)
-				# print "qpValue: %s " % qpValue
-				repQpName = rep_abbrev(qpName,abbreviations)
-				rep_qp_list.append(repQpName)
-				if qpValue == "true":
-					rep_qp_list.append('T')
-				if qpValue == "false":
-					rep_qp_list.append('F')
-				if qpName == "by":
-					rep_qp_list.append(qpValue)	
-	if rep_qp_list:			
-		example_file_name = example_file_name + "_" + "_".join(rep_qp_list)			
-	return example_file_name
-
-
-def rep_abbrev(text,abbreviations):
-	for abbi, abbr in iter(sorted(abbreviations.iteritems(),reverse=True)):
-		text = text.replace(abbi,abbr)
-		text = re.sub("\*/\*","any",text)
-		text = re.sub("/","_",text)	
-	return text	
-
-def rep_text(text,abbreviations):
-	for abbi, abbr in iter(sorted(abbreviations.iteritems(),reverse=True)):
-		text = text.replace(abbi,abbr)
-# If it's a storage pool name		
-	if "-" in text:
-		text = "X"
-# If it's an ID 	
-	if re.match("[0-9]",text):
-		text = "X"
-# If it's an entity with an underscore as an ID, e.g., request all enterprises but return only user enterprise if not cloud admin	
-	if text == "_":
-		text = "ALL"
-# If it's a hypervisor type or template type or public cloud region type, put TYPE		
-	if "_" in text:
-		text = "TYPE"		
-	return text
-
-def get_properties_file():
-	# Load properties for the scripts, including wiki properties that can't be stored in a public repo
-	properties = {}
-	with open("confluence_properties.json.txt") as pfile:
-		prop_file = pfile.read().replace('\n', '')	
-		prop_file = prop_file.replace('\t', " ")
-		properties = json.loads(prop_file)
-		for ick in (properties):
-			logging.info("Property: %s : %s " % (ick,properties[ick]))
-		output_subdir = properties['subdir']
-		rawLog = properties['rawLog']
-		MTversion = properties['MTversion']
-		return (output_subdir,rawLog,MTversion)
 
 def main():
 	logging.basicConfig(filename='api_examples.log',level=logging.DEBUG)
-	(output_subdir,rawLog) = get_properties_file()
+	MTversion = ""
+	(output_subdir,rawLog,MTversion) = get_properties_file()
 	#output_subdir = "test_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links and mediatypes for filenames
