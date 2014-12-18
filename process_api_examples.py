@@ -20,7 +20,6 @@ from io import BytesIO
 import logging
 
 
-
 class allheaders:
 	def __init__(self,aRequestAccept,aRequestContentType,aResponseContentType):
 		self.reqAc=aRequestAccept
@@ -32,7 +31,7 @@ class allheaders:
 #        print_mt_content = dowikimarkup(wiki_mt_content)          
 #        print("| ",self.method_name," | ",self.url_long," | ",print_mt_accept," | ",print_mt_content, " |")	
 #		print "self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT)			
-		logging.info ("self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT))
+		logging.debug ("self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT))
  
 def print_line(line):
 	request = yaml.load(line)
@@ -57,12 +56,9 @@ def open_if_not_existing(filename):
 
 
 def process_payload(mediatype,payload):
-#	payloadType is used for the sample file request_payload.xml .json, etc.
-	payloadType = ""
 	if "text" in mediatype:
 		text_payload = payload.encode('ascii')
-		payloadType = "text"
-		return (payloadType,text_payload)
+		return text_payload
 
 	elif "json" in mediatype:
 		json_payload = ""
@@ -74,8 +70,7 @@ def process_payload(mediatype,payload):
 			pretty_json = ""
 			logging.warning('Format exception: JSON payload - could not load payload with YAML or dump payload')
 		#	print "Exception: json payload - could not load payload with yaml or dump payload"
-		payloadType = "json"			
-		return (payloadType,pretty_json)
+		return pretty_json
 			
 	elif "xml" in mediatype:
 		xml_payload = ""
@@ -94,14 +89,12 @@ def process_payload(mediatype,payload):
 			logging.warning('Format exception: XML was valid but not well formed and could not be pretty printed!')
 		#	print "Exception: XML was not well formed and could not be pretty printed!"
 			pretty_xml = valid_xml
-		payloadType = "xml"	
-		return (payloadType,pretty_xml)	
+		return pretty_xml
 	
 	else:
 		weird_payload = ""
 		weird_payload = payload.encode('ascii')
-		payloadType = ""
-		return (payloadType,weird_payload)
+		return weird_payload
 
 def process_headers_act(raw_actp,raw_head):
 	rctp = ""
@@ -140,7 +133,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 
 		ex_file_name_plus_dir = os.path.join(output_subdir,ex_file_name)
 
-		# Append an X to the list... number of X-es = number of files created! I'm sure there's a better way to count them :-)
+		# Append an X to the list... number of X-es = number of files created! MEGA CUTRE! :-p
 		files_dictionary.setdefault(ex_file_name_plus_dir,[]).append("X")
 		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) 
 		# Pad the integer so that the files are nicely named
@@ -171,21 +164,20 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 			ef.write(ccurl2)
 		ccurl3 = ""
 		ccurl4 = ""
+		payloadType = ""
 		if re.search('[a-z]',hdrs.reqCT):
+			pt = re.search('json|xml',hdrs.reqCT)
 			ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT
 			if re.search(r'abiquo',hdrs.reqCT):
 				if not re.search('version\=[0-9]\.[0-9]',hdrs.reqCT): 
 					ccurl3 = "\t -H 'Content-Type:%s;version=3.2' \\ \n" % hdrs.reqCT 	
-			ccurl4 = "\t -d @requestpayload.xml \\ \n"	
+			ccurl4 = "\t -d @requestpayload.%s \\ \n" % pt.group(0)
 			ef.write(ccurl3)
 			ef.write(ccurl4)
 
 		ccurl5 = '\t -u user:password --verbose ]]></ac:plain-text-body></ac:macro>'	
 		ef.write(ccurl5)
-# 		mets = "*Method: %s \n" % request['method'] # string
-# 		ef.write(mets)
-#		urls = "<strong>URL:</strong> %s \n" % request['url'] # string
-#		ef.write(urls)
+
 		stat = "<p><strong>Success status code</strong>: %s </p>" % request['status'] # int
 		ef.write(stat)
 
