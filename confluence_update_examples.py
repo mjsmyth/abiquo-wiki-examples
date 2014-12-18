@@ -69,6 +69,7 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	try:	
 		page = server.confluence2.getPage(token, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
+		print ("No page created")
 		logging.info ("Confluence fault code: %d and string: %s " % (err.faultCode,err.faultString))
 #		logging.info ("Confluence string: %s " % err.faultString)	
 	return page		
@@ -79,12 +80,14 @@ def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId
 	token = server.confluence2.login(wikAuth.user, wikAuth.password)
 	alt_filename = ""
 	gotpage = get_page(wikAuth,wikLoc,pagetitle,server)
+
 	if gotpage:
 		# check if the page in Confluence is the 0001 file - and if not, get the file for the different page
 		pgcontent = gotpage['content']
 		filename_searchstring = pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt"
 		# if there is a filename on the page
 		fnm = re.search(filename_searchstring,pgcontent)
+		print "fnm: %s " % fnm.group(0)
 		if fnm:
 			if fnm.group(1) == "0001":
 				modifier = gotpage['modifier']
@@ -116,7 +119,7 @@ def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId
    			logging.info("The page: %s has been manually modified and will not be updated" % pagetitle)
 
    	else:
-	#	print "Creating new page %s" % (pagetitle)
+		print "Creating new page %s" % (pagetitle)
 		logging.info ("Creating new page %s" % (pagetitle))
 		newpage = {}
 	#	print "parentId: %s" % (parentId)
@@ -144,42 +147,19 @@ def get_content_file_names(inputSubdir):
 	# read all number 0001 pages in the directory
 	# mypath = "big/*.0001.txt"
 	# # get the files and only take the first part of the name without the 0001.txt
-	mypath = inputSubdir + "/*.0001.txt"
-	(onlyfiles,pagenames) = trim_file_glob(mypath)
 	pagenames = []
+	mypath = inputSubdir + "/*.0001.txt"
+	print "mypath %s " % mypath
+	(onlyfiles,pagenames) = trim_file_glob(mypath)
+
 	# read all the license files in the directory to avoid them
+	licpagenames = []
 	licpath = inputSubdir + "/*license*"
+	print "licpath %s " % licpath
 	(licfiles,licpagenames) = trim_file_glob(licpath)
 	return(onlyfiles,pagenames,licfiles,licpagenames)
 
 
-	# print "Only files:"
-	# for onff in onlyfiles:
-	# 	print "original: %s " % onff
-	# 	onff_path, onf = os.path.split(onff)
-	# 	print "trimmed: %s " % onf
-	# 	myff = onf.split(".")
-	# 	myf = myff[0]
-	# 	print "trimmed: %s " % myf
-	# 	pagenames.append(myf)
-	# for lpff in licfiles:
-	# 	print "original: %s " % lpff
-	# 	lpff_path, lpf = os.path.split(lpff)
-	# 	print "trimmed: %s " % lpf
-	# 	myll = lpf.split(".")
-	# 	myl = myll[0]
-	# 	print "trimmed: %s " % myl
-	# 	licpagenames.append(myl)	
-
-
-# space = page['space']
-# print "space: %s " % space
-# title = page['title']
-# print "title: %s " % title
-# content = page['content']
-# print "content: %s " % content
-# pageid = page['id']
-# print "id: %s " % pageid
 
 def main():
 	logging.basicConfig(filename='confluence_update_examples.log',level=logging.DEBUG)
@@ -188,24 +168,28 @@ def main():
 	# retrieve the parent page where the pages will be stored and get its ID
 	titleParent = loc.parentTitle 
 	parentPage = get_page(auth,loc,titleParent,server)
+
 	if parentPage:
-		print "Hello "
+	# I don't know how to handle this exception properly 
+	# because if the parent page doesn't exist, it's different to if a normal page doesn't exist
 		parentId = parentPage['id']
 	# retrieve the content of the files to create as pages
-	(filenames,pagenames,licfilenames,licpgnames) = get_content_file_names(inputSubdir)
-	for idx, pagen in enumerate(pagenames):
-		if 'license' in pagen:
-			logging.info ("Page contains license - %s " % pagen)
-		else:	
-			ncf = open(filenames[idx],'r')	
-			newcontent = ncf.read()
-			# create or update pages
-			try:
-				create_update_page(auth,loc,force,pagen,newcontent,server,parentId)
-			except:
-				logging.warning ("Could not update page - %s " % pagen)
-			ncf.close()
-
+		(filenames,pgenames,licfilenames,licpgnames) = get_content_file_names(inputSubdir)
+		for idx, pagen in enumerate(pgenames):
+			print "pagen: %s " % pagen
+			if 'license' in pagen:
+				logging.info ("Page contains license - %s " % pagen)
+			else:	
+				ncf = open(filenames[idx],'r')	
+				newcontent = ncf.read()
+				# create or update pages
+				try:
+					create_update_page(auth,loc,force,pagen,newcontent,server,parentId)
+				except:
+					logging.warning ("Could not update page - %s " % pagen)
+				ncf.close()
+	else:
+		print "Can't find the parent page"			
 # Calls the main() function
 if __name__ == '__main__':
 	main()

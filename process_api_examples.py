@@ -27,6 +27,12 @@ class allheaders:
 		self.reqCT=aRequestContentType
 		self.rspCT=aResponseContentType
 
+	def hprint(self):
+#        print_mt_accept = dowikimarkup(wiki_mt_accept)
+#        print_mt_content = dowikimarkup(wiki_mt_content)          
+#        print("| ",self.method_name," | ",self.url_long," | ",print_mt_accept," | ",print_mt_content, " |")	
+#		print "self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT)			
+		logging.info ("self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT))
  
 def print_line(line):
 	request = yaml.load(line)
@@ -51,9 +57,12 @@ def open_if_not_existing(filename):
 
 
 def process_payload(mediatype,payload):
+#	payloadType is used for the sample file request_payload.xml .json, etc.
+	payloadType = ""
 	if "text" in mediatype:
 		text_payload = payload.encode('ascii')
-		return text_payload
+		payloadType = "text"
+		return (payloadType,text_payload)
 
 	elif "json" in mediatype:
 		json_payload = ""
@@ -64,8 +73,9 @@ def process_payload(mediatype,payload):
 		except:
 			pretty_json = ""
 			logging.warning('Format exception: JSON payload - could not load payload with YAML or dump payload')
-		#	print "Exception: json payload - could not load payload with yaml or dump payload"			
-		return pretty_json
+		#	print "Exception: json payload - could not load payload with yaml or dump payload"
+		payloadType = "json"			
+		return (payloadType,pretty_json)
 			
 	elif "xml" in mediatype:
 		xml_payload = ""
@@ -84,26 +94,25 @@ def process_payload(mediatype,payload):
 			logging.warning('Format exception: XML was valid but not well formed and could not be pretty printed!')
 		#	print "Exception: XML was not well formed and could not be pretty printed!"
 			pretty_xml = valid_xml
-		return pretty_xml	
+		payloadType = "xml"	
+		return (payloadType,pretty_xml)	
 	
 	else:
 		weird_payload = ""
 		weird_payload = payload.encode('ascii')
-		return weird_payload
+		payloadType = ""
+		return (payloadType,weird_payload)
 
 def process_headers_act(raw_actp,raw_head):
 	rctp = ""
-#	rctp = "\'" + raw_actp + "\'"
-	ctp_list = raw_head[raw_actp]
-	if ctp_list:
-		rctp = ctp_list[0]
-		if rctp:
-			rctp = rctp.encode('ascii')
+	ctp = {}
+	if raw_actp in raw_head:		
+		rctp = raw_head[raw_actp][0]
+#		logging.info("Selected content type: %s - %s" % (raw_actp,str(rctp))) 
 	return rctp
 
-
 def process_headers(raw_request_head,raw_response_head):
-	# Check for header content and put all headers in one convenient object
+	# Check for header content and put all headers in one headers object
 	request_acc = ""
 	request_ct = ""
 	response_ct = ""
@@ -114,8 +123,9 @@ def process_headers(raw_request_head,raw_response_head):
 	if ccc in raw_request_head:	
 		request_ct = process_headers_act(ccc,raw_request_head)
 	if ccc in raw_response_head:	
-		response_ct = process_headers_act(ccc,raw_response_head)	
+		response_ct = process_headers_act(ccc,raw_response_head)		
 	hedrs = allheaders(request_acc,request_ct,response_ct)
+	hedrs.hprint()
 	return hedrs
 
 
@@ -147,7 +157,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 		hcurl = "<p><strong>cURL</strong>:</p>"
 		ef.write(hcurl)
 		if request['query_params']:
-			ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + request['query_params'] + " \\ \n"	
+			ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + "?" + request['query_params'] + " \\ \n"	
 		else:
 			ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + " \\ \n"
 		ef.write(ccurl1)
@@ -327,9 +337,9 @@ def get_properties_file():
 		prop_file = pfile.read().replace('\n', '')	
 		prop_file = prop_file.replace('\t', " ")
 		properties = json.loads(prop_file)
-		for ix, ick in enumerate(properties):
+		for ick in (properties):
 #			print "%d: %s - %s" % (ix,ick,properties[ick])
-			logging.info("%d: %s - %s" % (ix,ick,properties[ick]))
+			logging.info("Property: %s : %s " % (ick,properties[ick]))
 		output_subdir = properties['subdir']
 		rawLog = properties['rawLog']
 		return (output_subdir,rawLog)
