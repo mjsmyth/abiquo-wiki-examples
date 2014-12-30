@@ -210,7 +210,7 @@ def process_headers(raw_request_head,raw_response_head):
 	return hedrs
 
 
-def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
+def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion):
 #   request = yaml.load(line)
 	code_header = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA['
 	code_footer = ']]></ac:plain-text-body></ac:macro>'
@@ -230,89 +230,88 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary):
 		abiheader_file_name = ex_file_name + "." + "{0:04d}".format(number_of_files) + ".txt"
 		# Check that it doesn't already exist and open the file for writing
 		ef = open_if_not_existing(example_file_name)
-		if not ef:
-			logging.warning("File %s already exists" % example_file_name)
-			sys.stdout.write('File %s already exists' % example_file_name)
-
-		abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + abiheader_file_name + '</ac:rich-text-body></ac:macro>'
-		ef.write(abiheader)
-		hcurl = "<p><strong>cURL</strong>:</p>"
-		ef.write(hcurl)
-		if request['query_params']:
-			ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + "?" + request['query_params'] + " \\ \n"	
-		else:
-			ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + " \\ \n"
-		ef.write(ccurl1)
-		
-		ccurl2 = ""	
-		if re.search('[a-z]',hdrs.reqAc):
-			ccurl2 = "\t -H 'Accept:%s' \\ \n" % hdrs.reqAc 
-			if re.search(r'abiquo',hdrs.reqAc):
-				if not re.search('version\=[0-9]\.[0-9]',hdrs.reqAc):
-					ccurl2 = "\t -H 'Accept:%s;version=%s' \\ \n" % (hdrs.reqAc,MTversion)
-			ef.write(ccurl2)
-		ccurl3 = ""
-		ccurl4 = ""
-		payloadType = ""
-		if re.search('[a-z]',hdrs.reqCT):
-			pt = re.search('json|xml',hdrs.reqCT)
-			ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT
-			if re.search(r'abiquo',hdrs.reqCT):
-				if not re.search('version\=[0-9]\.[0-9]',hdrs.reqCT): 
-					ccurl3 = "\t -H 'Content-Type:%s;version=%s' \\ \n" % (hdrs.reqCT,MTversion) 	
-			ccurl4 = "\t -d @requestpayload.%s \\ \n" % pt.group(0)
-			ef.write(ccurl3)
-			ef.write(ccurl4)
-
-		ccurl5 = '\t -u user:password --verbose ]]></ac:plain-text-body></ac:macro>'	
-		ef.write(ccurl5)
-
-		stat = "<p><strong>Success status code</strong>: %s </p>" % request['status'] # int
-		ef.write(stat)
-
-#		reqh = "Request headers: %s" % request['request_headers'] # It's a JSON dictionary
-		nothing = "<p>--none--</p>" 
-		emptypayload = "<p>--empty--</p>"
-		reqh = "<p><strong>Request payload</strong>:</p>"
-		ef.write (reqh)
-
-		if hdrs.reqCT:
-			if request['request_payload']:
-				pretty_payload = ""
-				pretty_payload = process_payload(hdrs.reqCT,request['request_payload'])
-				if pretty_payload != "":
-					ef.write (code_header)
-					ef.write (pretty_payload)
-					ef.write (code_footer)
-				else:
-					ef.write (emptypayload)		
+		if ef:
+			abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + abiheader_file_name + '</ac:rich-text-body></ac:macro>'
+			ef.write(abiheader)
+			hcurl = "<p><strong>cURL</strong>:</p>"
+			ef.write(hcurl)
+			if request['query_params']:
+				ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + "?" + request['query_params'] + " \\ \n"	
 			else:
-				ef.write(nothing)
-		else:
-			ef.write(nothing)		
+				ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + " \\ \n"
+			ef.write(ccurl1)
+			
+			ccurl2 = ""	
+			if re.search('[a-z]',hdrs.reqAc):
+				ccurl2 = "\t -H 'Accept:%s' \\ \n" % hdrs.reqAc 
+				if re.search(r'abiquo',hdrs.reqAc):
+					if not re.search('version\=[0-9]\.[0-9]',hdrs.reqAc):
+						ccurl2 = "\t -H 'Accept:%s;version=%s' \\ \n" % (hdrs.reqAc,MTversion)
+				ef.write(ccurl2)
+			ccurl3 = ""
+			ccurl4 = ""
+			pt = ""
+			if re.search('[a-z]',hdrs.reqCT):
+				pt = re.search('json|xml',hdrs.reqCT)
+				ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT
+				if re.search(r'abiquo',hdrs.reqCT):
+					if not re.search('version\=[0-9]\.[0-9]',hdrs.reqCT): 
+						ccurl3 = "\t -H 'Content-Type:%s;version=%s' \\ \n" % (hdrs.reqCT,MTversion) 	
+				ccurl4 = "\t -d @requestpayload.%s \\ \n" % pt.group(0)
+				ef.write(ccurl3)
+				ef.write(ccurl4)
 
-		resh = "<p><strong>Response payload</strong>:</p>"
-		ef.write (resh)
-#		accept_type_list = request_head['Accept']
-		if 	request['status'] != 204:
-			if hdrs.rspCT:
-				if request['response_payload']:
+			ccurl5 = '\t -u user:password --verbose ]]></ac:plain-text-body></ac:macro>'	
+			ef.write(ccurl5)
+
+			stat = "<p><strong>Success status code</strong>: %s </p>" % request['status'] # int
+			ef.write(stat)
+
+	#		reqh = "Request headers: %s" % request['request_headers'] # It's a JSON dictionary
+			nothing = "<p>--none--</p>" 
+			emptypayload = "<p>--empty--</p>"
+			reqh = "<p><strong>Request payload</strong>:</p>"
+			ef.write (reqh)
+
+			if hdrs.reqCT:
+				if request['request_payload']:
 					pretty_payload = ""
-					pretty_payload = process_payload(hdrs.rspCT,request['response_payload'])
+					pretty_payload = process_payload(hdrs.reqCT,request['request_payload'])
 					if pretty_payload != "":
 						ef.write (code_header)
 						ef.write (pretty_payload)
 						ef.write (code_footer)
 					else:
-						ef.write (emptypayload)
+						ef.write (emptypayload)		
+				else:
+					ef.write(nothing)
+			else:
+				ef.write(nothing)		
+
+			resh = "<p><strong>Response payload</strong>:</p>"
+			ef.write (resh)
+	#		accept_type_list = request_head['Accept']
+			if 	request['status'] != 204:
+				if hdrs.rspCT:
+					if request['response_payload']:
+						pretty_payload = ""
+						pretty_payload = process_payload(hdrs.rspCT,request['response_payload'])
+						if pretty_payload != "":
+							ef.write (code_header)
+							ef.write (pretty_payload)
+							ef.write (code_footer)
+						else:
+							ef.write (emptypayload)
+					else:
+						ef.write(nothing)
 				else:
 					ef.write(nothing)
 			else:
 				ef.write(nothing)
-		else:
-			ef.write(nothing)
-		ef.close()		
-
+			ef.close()		
+		# else:
+		#	logging.warning("File %s already exists" % example_file_name)
+		#	sys.stdout.write('File %s already exists' % example_file_name)	
 
 def log_summary_line(line):
 	request = json.loads(line)
@@ -366,7 +365,7 @@ def main():
 #			print "ex_file_name: %s" % ex_file_name
 			log_summary_line(line)
 			# Note an empty output directory must exist ! (should sort this out)
-			pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary)	
+			pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion)	
 #			ex_file = open(os.path.join(output_subdir,ex_file_name), 'w')	
 
 # Calls the main() function
