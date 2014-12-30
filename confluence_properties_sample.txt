@@ -1,12 +1,12 @@
 {
 	"wikiUrl" : "http://URL:port",
 	"spaceKey" : "myspacekey",
-	"parentTitle" : "myExamplesParentPage",
-	"getForce" : "n",
+	"parentTitle" : "Examples Parent Page",
+	"confluenceForcePageUpdate" : "n",
 	"user" : "myusername",
 	"password" : "mypassword",
 	"getOverwrite" : "y",
 	"rawLog" : "requests.log",
-	"outputSubdir" : "example_files",
-	"prohibited" : "license"
+	"subdir" : "example_files",
+	"MTversion" : "3.2"
 }
