@@ -37,6 +37,13 @@ def open_if_not_existing(filename):
 	fobj = os.fdopen(fd, "w")
 	return fobj
 
+def write_json_file(filename,jsondict):
+	# open if not existing
+	jsf = open_if_not_existing(filename)
+	# dump json
+	if jsf:
+		json.dump(jsondict, jsf)
+	jsf.close
 
 def process_stringbool(userInput):
     try:
@@ -69,7 +76,6 @@ def get_properties_file():
 	wauth = wikiAuth(user,password,token)
 	subdir = properties['subdir']
 	return (wloc,wauth,force,server,subdir)
-
 
 
 def get_page(wikAuth,wikLoc,pageTitle,server):
@@ -120,53 +126,6 @@ def check_page_mod(wikAuth,wikLoc,force,pagetitle,pagepathfile,server,parentId,u
    			logging.info("The page: %s has been manually modified and will not be updated" % pagetitle)
 
 
-
-def create_update_page(wikAuth,wikLoc,force,pagetitle,pagepathfile,server,parentId):
-	# create or update pages as appropriate
-	token = server.confluence2.login(wikAuth.user, wikAuth.password)
-	alt_filename = ""
-	gotpage = get_page(wikAuth,wikLoc,pagetitle,server)
-	# update forced only 
-	# now try to udpate the pages in the okay pages list	
-				# get filename and path
-		#		newcontentpathfile = filenames[idx]	
-				# get new content
-		#		ncf = open(newcontentpathfile,'r')
-		#		newcontent = ncf.read()
-				# get filename for use in update file list
-				# nc_path, nf = os.path.split(ncfn)
-				# create or update pages
-
-					# if force is True:
-					# 	logging.info("Forced overwrite of page %s, modified by %s" % (modifier,pagetitle))
-					# 	#  	print "Forced overwrite of page %s, modified by %s" % (modifier,pagetitle)
-					# 	gotpage['content'] = newcontent
-					# 	token = server.confluence2.login(wikAuth.user, wikAuth.password)
-					# 	server.confluence2.storePage(token, gotpage) 	
-					# else:
-					#	print "Not overwriting page %s, modifed by %s" % (modifier,pagetitle)
-					#	logging.info("Not overwriting page %s, modifed by %s" % (modifier,pagetitle)) 
-				# else:
-				# 	logging.info("Page has not been manually modified, overwriting page %s" % (pagetitle))
-				# 	# print "Overwriting page %s" % (pagetitle)	
-				# 	gotpage['content'] = newcontent	
-				# 	token = server.confluence2.login(wikAuth.user, wikAuth.password) 		
-				# 	server.confluence2.storePage(token, gotpage)
-	# else:
-	# 	print "Creating new page %s" % (pagetitle)
-	# 	logging.info ("Creating new page %s" % (pagetitle))
-	# 	newpage = {}
-	# #	print "parentId: %s" % (parentId)
-	# 	newpage['space'] = wikLoc.spaceKey
-	# 	newpage['parentId'] = parentId
-	# 	newpage['title'] = pagetitle
-	# 	newpage['content'] = newcontent
-
-	# 	token = server.confluence2.login(wikAuth.user, wikAuth.password)
-	# 	server.confluence2.storePage(token, newpage)
- #   		# create a new page  	
-
-
 def create_file_page_list(globPath):
 	pathfiles = glob.glob(globPath)
 	pageFiles = {}
@@ -193,10 +152,7 @@ def get_content_file_names(inputSubdir):
 	licpath = inputSubdir + "/*license*"
 	print "licpath %s " % licpath
 	licenseFiles = create_file_page_list(licpath)
-
 	return(oneFiles,licenseFiles)
-
-
 
 
 def main():
@@ -234,8 +190,10 @@ def main():
 	else:
 		logging.error ("Can't find the parent page %s" % loc.parentTitle)			
 
-
-
+	# write one JSON file for each list 
+	write_json_file("All_files.json.txt",allFiles)
+	write_json_file("Prohibited_files.json.txt",licFiles)
+	write_json_file("Force_update.json.txt",updFiles)
 
 
 
