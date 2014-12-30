@@ -91,64 +91,70 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	return page		
 	
 
-def check_page_mod(wikAuth,wikLoc,force,pagetitle,pagepathfile,server,parentId,updFiles):
-	# check pages for modification and build a list
+def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
+	# check pages for modification and return modification
 	token = server.confluence2.login(wikAuth.user, wikAuth.password)
 	alt_filename = ""
 	gotpage = get_page(wikAuth,wikLoc,pagetitle,server)
 	# update forced only 
 	# If a page with this name exists
+	return_value = ""
 	if gotpage:
+		pgcontent = ""
 		# copy page content
 		pgcontent = gotpage['content']
 		# search for a filename on the page
 		filename_searchstring = pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt"
 		fnm = re.search(filename_searchstring,pgcontent)
-		#print "fnm: %s " % fnm.group(0)
 		if fnm:
+			logging.info("Page found containing file name %s " % fnm.group(0))
+	#		print "fnm: %s " % fnm.group(0)
 			if fnm.group(1) == "0001":
 				modifier = gotpage['modifier']
 				if modifier != wikAuth.user:
 				#	print "The page %s was manually modified by %s" % (modifier,pagetitle)
 					logging.info("The page %s was manually modified by %s" % (modifier,pagetitle))
 					# store page in update forced only
-					updFiles[pagetitle] = pagepathfile
-			else:	
+					return_vale = pagepathfile
+			else:
 				alt_filename = fnm.group(0)
 				logging.info("The page: %s uses file: %s " % (pagetitle,alt_filename))
 #				alt_filepath = os.path.join(subdir,alt_filename)
-				updFiles[pagetitle] = alt_filename 
+				return_value = alt_filename
 				# if group 1 is not 0001, use the alternative filename
 		else:
 		# if there is no valid filename in the file, then the file has a manual update 		
    		# put custom
-   			updFiles[pagetitle] = "custom"
-   			logging.info("The page: %s has been manually modified and will not be updated" % pagetitle)
-
+   			return_value = "custom"
+   			logging.info("The page %s was found but did not contain a valid filename" % (pagetitle)
+   	else:
+   		logging.info("The page could not be found")
+   		return_value = ""
+   	return(return_value)			
 
 def create_file_page_list(globPath):
 	pathfiles = glob.glob(globPath)
-	pageFiles = {}
+	FFiles = {}
 	for pff in pathfiles:
 		pf_path, pf = os.path.split(pff)
 		ffpg = pf.split(".")
 		fpg = ffpg[0]
-		pageFiles[fpg]=pff
+		FFiles[fpg]=pff
 		logging.info("Full file path: %s and page name: %s " % (pff,fpg))
-	return(pageFiles)
+	return(FFiles)
 
 
 def get_content_file_names(inputSubdir):
 	# read all number 0001 pages in the directory
 	# mypath = "big/*.0001.txt"
 	# # get the files and only take the first part of the name without the 0001.txt
-	pagenames = []
+	oneFiles = {}
 	mypath = inputSubdir + "/*.0001.txt"
 	print "mypath %s " % mypath
 	oneFiles = create_file_page_list(mypath)
 
 	# read all the license files in the directory to avoid them
-	licpagenames = []
+	licenseFiles = {}
 	licpath = inputSubdir + "/*license*"
 	print "licpath %s " % licpath
 	licenseFiles = create_file_page_list(licpath)
@@ -156,7 +162,7 @@ def get_content_file_names(inputSubdir):
 
 
 def main():
-	logging.basicConfig(filename='confluence_update_examples.log',level=logging.DEBUG)
+	logging.basicConfig(filename='read_files_confluence_pages.log',level=logging.DEBUG)
 	# load properties file with wiki properties
 	(loc,auth,force,server,inputSubdir) = get_properties_file()
 
@@ -167,6 +173,8 @@ def main():
 	# retrieve the names of all the 0001 files 
 	# and also the license files to add to the prohibited list
 	(allFiles,licFiles) = get_content_file_names(inputSubdir)
+	for lix in licFiles:
+		print "lix: %s" % lix
 
 	# retrieve the parent page where the pages will be stored and get its ID
 	parentPage = get_page(auth,loc,loc.parentTitle,server)
@@ -182,18 +190,19 @@ def main():
 				logging.info ("Skipping page containing license - %s " % pagen)
 			else:
 				pagenPath = allFiles[pagen]
-				try:
-					check_page_mod(auth,loc,pagen,pagenPath,server,parentId,updFiles)
-				except:
-					logging.info ("Could not find page - %s " % pagen)
-				ncf.close()
+				pagenUpdatedPage = check_page_mod(auth,loc,pagen,pagenPath,server,parentId)
+				if pagenUpdatedPage:
+					updFiles[pagen] = pagenUpdatedPage				
 	else:
 		logging.error ("Can't find the parent page %s" % loc.parentTitle)			
-
+	for lix in licFiles:
+		print "lix: %s" % lix
+	for uix in updFiles:
+		print "uix: %s" % uix		
 	# write one JSON file for each list 
-	write_json_file("All_files.json.txt",allFiles)
-	write_json_file("Prohibited_files.json.txt",licFiles)
-	write_json_file("Force_update.json.txt",updFiles)
+	write_json_file("wiki_all_files.json.txt",allFiles)
+	write_json_file("wiki_prohibited.json.txt",licFiles)
+	write_json_file("wiki_force_update.json.txt",updFiles)
 
 
 
