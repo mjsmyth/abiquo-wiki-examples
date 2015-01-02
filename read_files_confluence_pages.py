@@ -107,7 +107,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 		filename_searchstring = pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt"
 		fnm = re.search(filename_searchstring,pgcontent)
 		if fnm:
-			logging.info("Page found containing file name %s " % fnm.group(0))
+			logging.info("Page %s found containing file name %s " % (fnm.group(0),pagetitle))
 	#		print "fnm: %s " % fnm.group(0)
 			if fnm.group(1) == "0001":
 				modifier = gotpage['modifier']
@@ -115,21 +115,23 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 				#	print "The page %s was manually modified by %s" % (modifier,pagetitle)
 					logging.info("The page %s was manually modified by %s" % (modifier,pagetitle))
 					# store page in update forced only
-					return_vale = pagepathfile
+					return_vale = "modifer: " + modifier
 			else:
 				alt_filename = fnm.group(0)
-				logging.info("The page: %s uses file: %s " % (pagetitle,alt_filename))
+				logging.info("Page: %s uses file: %s " % (pagetitle,alt_filename))
 #				alt_filepath = os.path.join(subdir,alt_filename)
 				return_value = alt_filename
 				# if group 1 is not 0001, use the alternative filename
 		else:
+		# the filename may be the same but with a by "XXXX" or "xxxxx" (i.e. in capital letters or lower case)
+		# deal with this!!!		
 		# if there is no valid filename in the file, then the file has a manual update 		
    		# put custom
    			return_value = "custom"
-   			logging.info("The page %s was found but did not contain a valid filename" % (pagetitle)
+   			logging.info("The page %s was found but did not contain a valid filename" % (pagetitle))
    	else:
-   		logging.info("The page could not be found")
-   		return_value = ""
+   		logging.info("The page %s could not be found" % pagetitle)
+   		return_value = "new"
    	return(return_value)			
 
 def create_file_page_list(globPath):
@@ -140,7 +142,7 @@ def create_file_page_list(globPath):
 		ffpg = pf.split(".")
 		fpg = ffpg[0]
 		FFiles[fpg]=pff
-		logging.info("Full file path: %s and page name: %s " % (pff,fpg))
+		logging.info("Create new file: %s and page name: %s " % (pff,fpg))
 	return(FFiles)
 
 
@@ -150,19 +152,20 @@ def get_content_file_names(inputSubdir):
 	# # get the files and only take the first part of the name without the 0001.txt
 	oneFiles = {}
 	mypath = inputSubdir + "/*.0001.txt"
-	print "mypath %s " % mypath
+	logging.info("mypath %s " % mypath)
 	oneFiles = create_file_page_list(mypath)
 
 	# read all the license files in the directory to avoid them
 	licenseFiles = {}
 	licpath = inputSubdir + "/*license*"
-	print "licpath %s " % licpath
+	logging.info("licpath %s " % licpath)
 	licenseFiles = create_file_page_list(licpath)
 	return(oneFiles,licenseFiles)
 
 
 def main():
-	logging.basicConfig(filename='read_files_confluence_pages.log',level=logging.DEBUG)
+	logging.basicConfig(filename='read_files_pages.log',level=logging.DEBUG)
+	logging.info("***Starting script now ***")
 	# load properties file with wiki properties
 	(loc,auth,force,server,inputSubdir) = get_properties_file()
 
@@ -185,7 +188,7 @@ def main():
 
 		# try to determine any pages that have been modified and put them in updFiles dictionary
 		for pagen in allFiles:
-			print "pagen: %s " % pagen
+			logging.info ("pagen: %s " % pagen)
 			if pagen in licFiles:
 				logging.info ("Skipping page containing license - %s " % pagen)
 			else:

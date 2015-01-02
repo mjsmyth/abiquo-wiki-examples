@@ -123,6 +123,7 @@ def rep_abbrev(text,abbreviations):
 		text = text.replace(abbi,abbr)
 		text = re.sub("\*/\*","any",text)
 		text = re.sub("/","_",text)	
+		text = re.sub ("\.","_",text)
 	return text	
 
 
@@ -140,7 +141,9 @@ def rep_text(text,abbreviations):
 		text = "ALL"
 # If it's a hypervisor type or template type or public cloud region type, put TYPE		
 	if "_" in text:
-		text = "TYPE"		
+		text = "TYPE"
+	if "\."	in text:
+		text = text.replace("\.","_")		
 	return text
 
 
@@ -250,15 +253,19 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 				ef.write(ccurl2)
 			ccurl3 = ""
 			ccurl4 = ""
-			pt = ""
 			if re.search('[a-z]',hdrs.reqCT):
-				pt = re.search('json|xml',hdrs.reqCT)
+				pt = ""
 				ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT
 				if re.search(r'abiquo',hdrs.reqCT):
 					if not re.search('version\=[0-9]\.[0-9]',hdrs.reqCT): 
 						ccurl3 = "\t -H 'Content-Type:%s;version=%s' \\ \n" % (hdrs.reqCT,MTversion) 	
-				ccurl4 = "\t -d @requestpayload.%s \\ \n" % pt.group(0)
 				ef.write(ccurl3)
+				pts = re.search('json|xml|text',hdrs.reqCT)
+				if pts.group(0): 
+					pt = pts.group(0)
+					ccurl4 = "\t -d @requestpayload.%s \\ \n" % pt
+				else:
+					ccurl4 = "\t -d @requestpayload \\ \n" 
 				ef.write(ccurl4)
 
 			ccurl5 = '\t -u user:password --verbose ]]></ac:plain-text-body></ac:macro>'	
