@@ -1,13 +1,16 @@
 # abiquo-wiki-examples
 
-Automation of Abiquo API examples in the Abiquo wiki with a set of 3 Python scripts using Python 2.7.
+Automation of Abiquo API examples in the Abiquo wiki with a set of three Python scripts using Python 2.7.
 
 Copy the sample properties file to the real properties file name and change the values to appropriate ones for your environment.
 
 There are three scripts: `process_api_examples.py`, `read_files_confluence_pages.py` and `update_confluence_pages.py`
 
 ## process_api_examples.py
-Read the requests log and create example files in Confluence storage format for all requests with success status code (<400). The file names are based on the query command and URL, abbreviated according to the list in the `abbreviations.json.txt` file. An example of a file name is `DELETE_adm_dcs_X.0001.txt` and an example Confluence page name is `DELETE_adm_dcs_X`. Here X represents an entity number, e.g. Datacenter 6. Note that the abbreviation system is not perfect because the program abbreviates text literals rather than replacing them.
+
+  * Read the requests log and create example files in Confluence storage format for all requests with success status code (<400). 
+  * The file names are based on the query command and URL, abbreviated according to the list in the `abbreviations.json.txt` file. 
+   * An example of a file name is `DELETE_adm_dcs_X.0001.txt` and an example Confluence page name is `DELETE_adm_dcs_X`. Here X represents an entity number, e.g. Datacenter 6. Note that the abbreviation system is not perfect because the program abbreviates text literals rather than replacing them.
 
 The example pages should contain the file name in a hidden div with the title abiheader. So if you create a custom file, you can add it, for example, my_own_file.txt, and the search will look for it in the abiheader section: 
 "`abiheader</ac:parameter><ac:rich-text-body>my_own_file.txt<`"
