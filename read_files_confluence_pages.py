@@ -97,7 +97,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 	alt_filename = ""
 	gotpage = get_page(wikAuth,wikLoc,pagetitle,server)
 	# update forced only 
-	# If a page with this name exists
+	# A page may already exist with a different name if there is a upper/lower case version of a test
 	return_value = ""
 	if gotpage:
 		pgcontent = ""
@@ -120,15 +120,35 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 				alt_filename = fnm.group(0)
 				logging.info("Page: %s uses file: %s " % (pagetitle,alt_filename))
 #				alt_filepath = os.path.join(subdir,alt_filename)
-				return_value = alt_filename
+				return_value = "alternative: " + alt_filename
 				# if group 1 is not 0001, use the alternative filename
 		else:
-		# the filename may be the same but with a by "XXXX" or "xxxxx" (i.e. in capital letters or lower case)
-		# deal with this!!!		
-		# if there is no valid filename in the file, then the file has a manual update 		
-   		# put custom
-   			return_value = "custom"
-   			logging.info("The page %s was found but did not contain a valid filename" % (pagetitle))
+			# the filename may be the same but with a by "XXXX" or "xxxxx" (i.e. in capital letters or lower case)
+			fnigc = re.search(filename_searchstring,pgcontent,re.IGNORECASE)
+			if fnigc:
+				logging.info("The page %s already exists but with the filename %s" % (pagetitle,fnigc.group(0)))
+				return_value = "duplicate: " + fnigc.group(0)
+			else:	
+				logging.error("In the wrong place")
+				cs = r'abiheader</ac\:parameter><ac\:rich-text-body>' + '([\w,\.]+)' + r'<'
+				fncust = re.search(cs,pgcontent)
+				ca = r'abiheader</ac:parameter><ac:rich-text-body>'
+				fnca = re.search(ca,pgcontent)
+				if fnca:
+					logging.error ("Hello!")	
+				if fncust:
+					logging.info ("group0: %s |group1: %s " % (fncust.group(0),fncust.group(1)))
+					if fncust.group(1):
+						logging.error ("found something else")
+						logging.info("The page %s exists and has a custom filename %s " % (pagetitle,fncust.group(1)))
+						return_value = "custom: " + fncust.group(1)
+					else:
+						return_value = "invalid"			
+			# if there is no valid auto filename in the file, then the file has a manual update 		
+   			# put custom
+   				else:
+   					return_value = "invalid"
+   					logging.info("The page %s was found but did not contain a valid filename" % (pagetitle))
    	else:
    		logging.info("The page %s could not be found" % pagetitle)
    		return_value = "new"
@@ -141,8 +161,8 @@ def create_file_page_list(globPath):
 		pf_path, pf = os.path.split(pff)
 		ffpg = pf.split(".")
 		fpg = ffpg[0]
-		FFiles[fpg]=pff
-		logging.info("Create new file: %s and page name: %s " % (pff,fpg))
+		FFiles[fpg]=pf
+		logging.info("Create file: %s and page name: %s " % (pff,fpg))
 	return(FFiles)
 
 
