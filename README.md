@@ -7,7 +7,10 @@ Copy the sample properties file to the real properties file name and change the 
 There are three scripts: `process_api_examples.py`, `read_files_confluence_pages.py` and `update_confluence_pages.py`
 
 ## process_api_examples.py
-Read the requests log and create example files in Confluence storage format for all requests with success status code (<400). The file names are based on the query command and URL, abbreviated according to the list in the `abbreviations.json.txt` file. An example of a file name is `DELETE_adm_dcs_X.0001.txt` and an example Confluence page name is `DELETE_adm_dcs_X`. Here X represents an entity number, e.g. Datacenter 6. Note that the abbreviation system is not perfect because the program abbreviates some text literals rather than replacing them with X. 
+Read the requests log and create example files in Confluence storage format for all requests with success status code (<400). The file names are based on the query command and URL, abbreviated according to the list in the `abbreviations.json.txt` file. An example of a file name is `DELETE_adm_dcs_X.0001.txt` and an example Confluence page name is `DELETE_adm_dcs_X`. Here X represents an entity number, e.g. Datacenter 6. Note that the abbreviation system is not perfect because the program abbreviates text literals rather than replacing them.
+
+The example pages should contain the file name in a hidden div with the title abiheader. So if you create a custom file, you can add it, for example, my_own_file.txt, and the search will look for it in the abiheader section: 
+"abiheader</ac:parameter><ac:rich-text-body>my_own_file.txt<"
 
 The example pages are designed to be MANUALLY included in the wiki API reference docs. It is possible to search or retrieve page content (using the Sarah Maddox scripts) and grep for included page names.
 
@@ -30,4 +33,4 @@ The file is in the format "Page name" : "Info", which info may include a file na
 Files that must NOT be included in the wiki (e.g. files containing licenses). The file is in the format "Page name" : "File path"
 
 ## update_confluence_pages.py
-Read *wiki_all_files.json.txt*. If Force update options are set, update all pages found in *wiki_force_update.json.txt*. Always ignore prohbited files.  
+Read `wiki_all_files.json.txt`. If Force update options are set, update all pages found in `wiki_force_update.json.txt`. Do not add of the pages in `wiki_prohibited.json.txt` to the wiki.  
