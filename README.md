@@ -27,11 +27,12 @@ This file contains a JSON dictionary of all *0001* files. You could add your own
 
 ### wiki_force_update.json.txt 
 This file contains a JSON dictionary of all "updated" files. Files will be included in this list for various reasons, for example
-  * if the last user to modify the Confluence page is not the same user as the one running the script
-  * the filename included in the page is different, e.g. a user has changed the 0001 file for an 0002 file 
-  * the abc_xxx page was created already and there is also an abc_XXX.0001.txt file.
-
-The file is in the format "Page name" : "Info", which info may include a file name. 
+  * **modifier**: if the last user to modify the Confluence page is not the same user as the one running the script
+  * **alternative**: the file name pattern is the same but the file name included in the page is different, e.g. a user has changed the 0001 file for an 0002 file 
+  * **duplicate**: the `abc_xxx page` was created already and there is also an `abc_XXX.0001.txt` file. By default, this page will be ignored
+  * **custom**: this page will be updated with the custom file specified by the user. Note that custom file names cannot contain spaces 
+  * **invalid**: there is no valid filename
+The file is in the format "Page name" : "<status string>: file name", where <status string> is one of the status strings in the above list (modifier, alternative, etc.) and an example is "DELETE_adm_dcs_X" : "My_file.txt"
 
 ### wiki_prohibited.json.txt
 Files that must NOT be included in the wiki (e.g. files containing licenses). The file is in the format "Page name" : "File path"
