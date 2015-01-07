@@ -10,7 +10,7 @@ There are three scripts: `process_api_examples.py`, `read_files_confluence_pages
 Read the requests log and create example files in Confluence storage format for all requests with success status code (<400). The file names are based on the query command and URL, abbreviated according to the list in the `abbreviations.json.txt` file. An example of a file name is `DELETE_adm_dcs_X.0001.txt` and an example Confluence page name is `DELETE_adm_dcs_X`. Here X represents an entity number, e.g. Datacenter 6. Note that the abbreviation system is not perfect because the program abbreviates text literals rather than replacing them.
 
 The example pages should contain the file name in a hidden div with the title abiheader. So if you create a custom file, you can add it, for example, my_own_file.txt, and the search will look for it in the abiheader section: 
-"abiheader</ac:parameter><ac:rich-text-body>my_own_file.txt<"
+"`abiheader</ac:parameter><ac:rich-text-body>my_own_file.txt<`"
 
 The example pages are designed to be MANUALLY included in the wiki API reference docs. It is possible to search or retrieve page content (using the Sarah Maddox scripts) and grep for included page names.
 
