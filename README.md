@@ -14,6 +14,7 @@ There are three scripts: `process_api_examples.py`, `read_files_confluence_pages
 
 The example pages should contain the file name in a hidden div with the title abiheader. So if you create a custom file, you can add it, for example, my_own_file.txt, and the search will look for it in the abiheader section: 
 "`abiheader</ac:parameter><ac:rich-text-body>my_own_file.txt<`"
+It should be a valid filename with no spaces.
 
 The example pages are designed to be MANUALLY included in the wiki API reference docs. It is possible to search or retrieve page content (using the Sarah Maddox scripts) and grep for included page names.
 
