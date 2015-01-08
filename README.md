@@ -5,8 +5,8 @@ Automation of Abiquo API examples in the Abiquo wiki with a set of three Python 
 ## Input files
 Developers provide a requests.log JSON file with query output from integration tests.
 
-| JSON element | Data type |
-| ---------------- | --------- |
+| JSON element |: Data type |
+| ---------------- |:--------- |
 | method | string |
 | url | string |
 | query_params | string |
