@@ -2,14 +2,18 @@
 Automation of Abiquo API examples in the Abiquo wiki with a set of three Python scripts.
 
 ##Disclaimer
-Use these scripts at your own risk because they are provided "as is" and with no guarantees. They were developed to update the documentation of our REST API but I hope they can be useful to others.
+Use these scripts at your own risk because they are provided "as is" and with no guarantees. They were developed to update the documentation of our REST API in our environment, but I hope that you can modify them and use them in your own environment.
 
 ##Acknowledgements
 Many thanks to Enric Ruiz for modifying the integration tests to produce the requests.log file.
-The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall called "Adding a page to Confluence with Python" from 29 June 2008
+The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall called "Adding a page to Confluence with Python" from 29 June 2008. 
 
 ## Prerequisites
-These scripts require Confluence API access. I have run them on Confluence 4.3.2, using Python 2.7.9.
+* I have run these scripts using Python 2.7.9 against Confluence 4.3.2
+* These scripts require Confluence API access to be enabled
+* You should create a Confluence user for running these scripts
+* You should create a separate Confluence wiki space with a suitable parent page (no spaces in name) to hold the example pages. Each example is created in a separate file and page. These pages can be included in API reference documentation
+* When you have checked your results, you can copy the pages to your documentation wiki
 
 ## Input files
 Developers provide a requests.log JSON file with query output from integration tests. The file used in this case has the following format.
@@ -54,7 +58,7 @@ Unless otherwise specified, the pages listed in wiki_updates.json.txt are update
 |alternative | yes | Update pages with an alternative page number version, e.g. 0002 |
 |duplicate | no | Update pages with a duplicate page to the other version e.g. XXXX.0001.txt changes to xxxx.0001.txt and vice versa |
 |custom | no | Update pages with a custom file valide name, e.g. myfile.txt |
-|invalid | yes | Update pages with an invalid file name, e.g. text with spaces. In this case, use the 0001 file |
+|invalid | yes | Update pages with an invalid file name, e.g. text with spaces. Use the 0001 file |
 
 ## Scripts
 There are three scripts: `process_api_examples.py`, `read_files_confluence_pages.py` and `update_confluence_pages.py`
