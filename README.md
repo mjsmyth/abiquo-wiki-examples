@@ -61,14 +61,14 @@ Pages that would be updated are listed in the `wiki_updates.json.txt` file. Thes
 
 If none of the basic properties are set, these status properties determine if the files are updated or not. The text file used to update the page will be the one shown in the Default text file column below, unless the wiki_update.json.txt file is manually edited to modify the file name values.   
 
-|Property | Default | Description | Default text file pattern | 
-|:-----|:-----|:------|:-----|
-|existing | yes | Update existing pages listed (i.e. pages with no status string) | xxxx.0001.txt  |
-|modifier | no | Update pages modified by users that are not the script user  | xxxx.0001.txt  |
-|alternative | yes | Update pages with an alternative page number version | alternative, e.g. xxxx.0002.txt  |
-|duplicate | no | Update pages with a duplicate file with the file text of the other version e.g. XXXX.0001.txt changes to xxxx.0001.txt and vice versa | duplicate, e.g. XXXX.0001.txt  |
-|custom | no | Update pages with a valid custom file name | custom, e.g. myfile.txt  |
-|invalid | no | Update pages with an invalid file name, e.g. text with spaces | xxx.0001.txt  |
+|Property | Default | Description | Default text file | Example file name | 
+|:-----|:-----|:------|:-----|:-----|
+|existing | yes | Update existing pages listed (i.e. pages with no status string) | 0001 | xxxx.0001.txt  |
+|modifier | no | Update pages modified by users that are not the script user  | 0001 | xxxx.0001.txt  |
+|alternative | yes | Update pages with an alternative page number version | alternative | xxxx.0002.txt  |
+|duplicate | no | Update pages with a duplicate file with the file text of the other version e.g. XXXX.0001.txt changes to xxxx.0001.txt and vice versa | duplicate | XXXX.0001.txt  |
+|custom | no | Update pages with a valid custom file name | custom | myfile.txt  |
+|invalid | no | Update pages with an invalid file name, e.g. text with spaces | 0001 | xxx.0001.txt  |
 
 ## Scripts
 There are three scripts: `process_api_examples.py`, `read_files_confluence_pages.py` and `update_confluence_pages.py`
