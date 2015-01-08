@@ -57,7 +57,7 @@ Unless otherwise specified, the pages listed in wiki_updates.json.txt are update
 |updateAll | no | Update ALL pages using the default text file | Default text file as supplied in this column in the following table | 
 
 #### Status properties
-Pages that would be updated are listed in the `wiki_updates.json.txt` file. These properties determine how to treat pages with different status string values as described below. Note that the basic properties override these properties. If rewriteAll is set, the status properties are ignored and all pages are rewritten with the 0001 file. If updateAll is set, the status properties are ignored and all pages are updated using the Default text file. 
+Pages that would be updated are listed in the `wiki_updates.json.txt` file. These properties determine how to treat pages with different status string values as described below. Note that the **basic properties** described above completely override these properties. 
 
 If none of the basic properties are set, these status properties determine if the files are updated or not. The text file used to update the page will be the one shown in the Default text file column below, unless the wiki_update.json.txt file is manually edited to modify the file name values.   
 
