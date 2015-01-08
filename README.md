@@ -50,15 +50,26 @@ These properties are related to how the update script updates the wiki, based on
 Also see the specific section about this file below
 Unless otherwise specified, the pages listed in wiki_updates.json.txt are updated with the corresponding files listed in the same file. So it is also possible to modify the behaviour of the script by modifying the file directly, although this is not generally recommended.
 
-|Property | Example | Description |
-|:-----|:-----|:------|
-|updateAll | no | Update ALL pages listed  |
-|existing | yes | Update existing pages listed (without status string) |
-|modifier | no | Update pages modified by users that are not the script user  |
-|alternative | yes | Update pages with an alternative page number version, e.g. 0002 |
-|duplicate | no | Update pages with a duplicate page to the other version e.g. XXXX.0001.txt changes to xxxx.0001.txt and vice versa |
-|custom | no | Update pages with a custom file valide name, e.g. myfile.txt |
-|invalid | yes | Update pages with an invalid file name, e.g. text with spaces. Use the 0001 file |
+#### Basic properties
+|Property | Default | Description | Default text file |
+|:-----|:-----|:------|:-----|
+|rewriteAll | no | Overwrite ALL pages listed with the default 0001 file | 0001 file | 
+|updateAll | no | Update ALL pages using the default text file | Default text file as supplied in this column in the following table | 
+
+#### Status properties
+These properties determine how to treat pages with different status string values as described below. 
+If rewriteAll is set, the status properties are ignored and all pages are rewritten with the 0001 file. If updateAll is set, all pages are updated using the Default text file. 
+
+If none of the basic properties are set, these status properties determine if the files are updated or not. The text file used to update the page will be the one shown in the Default text file column below, unless the wiki_update.json.txt file is manually edited to modify the file name values.   
+
+|Property | Default | Description | Default text file |
+|:-----|:-----|:------|:-----|
+|existing | yes | Update existing pages listed (i.e. pages with no status string) | 0001 file |
+|modifier | no | Update pages modified by users that are not the script user  | 0001 file |
+|alternative | yes | Update pages with an alternative page number version, e.g. 0002 | alternate file |
+|duplicate | no | Update pages with a duplicate file with the file text of the other version e.g. XXXX.0001.txt changes to xxxx.0001.txt and vice versa | duplicate file |
+|custom | no | Update pages with a valid custom file name, e.g. myfile.txt | custom file |
+|invalid | no | Update pages with an invalid file name, e.g. text with spaces | 0001 file |
 
 ## Scripts
 There are three scripts: `process_api_examples.py`, `read_files_confluence_pages.py` and `update_confluence_pages.py`
