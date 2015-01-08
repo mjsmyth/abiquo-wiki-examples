@@ -57,7 +57,7 @@ This file contains a JSON dictionary of all *0001* files. You could add your own
 #### wiki_update.json.txt 
 This file contains a JSON dictionary of all files that already have pages. 
 
-The file is in the format "Page name" : "\[\<status string\>: \]file name", where <status string> is one of the status strings in the above list (modifier, alternative, etc.) and an example is "DELETE_adm_dcs_X" : "custom: My_file.txt"
+The file is in the format "Page name" : "\[\<status string\>: \]file name", where \<status string\> is one of the status strings in the above list (modifier, alternative, etc.) and an example is "DELETE_adm_dcs_X" : "custom: My_file.txt"
 
 Where the 0001 file appears to have been used, only the file name given and no status string is included. 
 
