@@ -27,7 +27,7 @@ This file contains a JSON dictionary of all *0001* files. You could add your own
 
 ### wiki_force_update.json.txt 
 This file contains a JSON dictionary of all "updated" files. Files will be included in this list for various reasons, for example
-  * **page**: a page exists for this file and it contains the 0001 file name
+  * _pagename_ only: a page exists for this file and it contains the 0001 file name
   * **modifier**: if the last user to modify the Confluence page is not the same as the user running the script
   * **alternative**: the file name pattern is the same but the file name included in the page is different, e.g. a user has changed the 0001 file for an 0002 file 
   * **duplicate**: the `abc_xxx page` was created already and there is also an `abc_XXX.0001.txt` file. By default, this page will be ignored
