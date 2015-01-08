@@ -2,7 +2,7 @@
 Automation of Abiquo API examples in the Abiquo wiki with a set of three Python scripts.
 
 ##Disclaimer
-Use these scripts at your own risk because they are provided "as is" and with no guarantees. They were developed to update the documentation of our REST API in our environment, but I hope that you can modify them and use them in your own environment.
+Use these scripts at your own risk because they are provided "as is" and with no guarantees. I created this project to update the examples in our REST API documentation, and learnt Python and designed the project as I went along.
 
 ##Acknowledgements
 Many thanks to Enric Ruiz for modifying the integration tests to produce the requests.log file.
