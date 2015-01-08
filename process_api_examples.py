@@ -12,7 +12,7 @@ import yaml
 import ast
 import re
 import xml.dom.minidom
-import os.path
+import os
 import cgi
 from lxml import etree
 from StringIO import StringIO

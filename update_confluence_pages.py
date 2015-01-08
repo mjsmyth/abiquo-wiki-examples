@@ -27,14 +27,23 @@ class wikiLoc:
 		self.spaceKey=aspaceKey
 		self.parentTitle=aparentTitle
 
+class wikiProp:
+	def __init__(self,arw,aup,aex,amo,aal,adu,acu,aiv):
+		self.rewriteAll = arw
+		self.updateAll = aup
+		self.existing = aex
+		self.modifier = amo
+		self.alternative = aal
+		self.duplicate = adu
+		self.custom = acu
+		self.invalid = aiv
 
-def process_stringbool(userInput):
+
+def proc_strbool(propbool):
     try:
         return strtobool(userInput.lower())
     except ValueError:
     	logging.warning('Invalid boolean property %s' % userInput)
-        sys.stdout.write('Invalid boolean property')
-
 
 def get_properties_file():
 	# Load properties for the script, including wiki properties that can't be stored in a public repo
@@ -49,8 +58,8 @@ def get_properties_file():
 	wikiUrl = properties['wikiUrl']
 	spaceKey = properties['spaceKey']
 	parentTitle =  properties['parentTitle'] 
-	getforce = properties['confluenceForcePageUpdate']
-	force = process_stringbool(getforce)
+
+
 	user = properties['user']
 	password = properties['password']
 	wloc = wikiLoc(wikiUrl,spaceKey,parentTitle)
@@ -58,7 +67,27 @@ def get_properties_file():
 	token = server.confluence2.login(user, password)
 	wauth = wikiAuth(user,password,token)
 	subdir = properties['subdir']
-	return (wloc,wauth,force,server,subdir)
+
+	grw = properties['rewriteAll']
+	rw = proc_strbool(grw)
+	gup = properties['updateAll']
+	up = proc_strbool(gup)
+	gex = properties['existing']
+	ex = proc_strbool(gex)	
+	gmo = properties['modifier']
+	mo = proc_strbool(gmo)
+	gal = properties['alternative']
+	al = proc_strbool(gal)
+	gdu = properties['duplicate']
+	du = proc_strbool(gdu)
+	gcu = properties['custom']
+	cu = proc_strbool(gcu)
+	giv = properties['invalid']
+	iv = proc_strbool(giv)
+
+	wprop = wikiProp(rw,up,ex,mo,al,du,cu,iv)
+
+	return (wloc,wauth,server,subdir,wprop)
 
 def get_updates_file(update_file):
 	# Load properties for the script, including wiki properties that can't be stored in a public repo
@@ -121,7 +150,7 @@ def create_update_page(wikAuth,wikLoc,pagetitle,newcontent,server,parentId):
 def main():
 	logging.basicConfig(filename='update_pages.log',level=logging.DEBUG)
 	# load properties file with wiki properties
-	(loc,auth,force,server,inputSubdir) = get_properties_file()
+	(loc,auth,server,inputSubdir,prop) = get_properties_file()
 	# retrieve the parent page where the pages will be stored and get its ID
 
 	parentPage = get_page(auth,loc,loc.parentTitle,server)
@@ -132,15 +161,24 @@ def main():
 		parentId = parentPage['id']
 	# retrieve the content of the files to create as pages
 		all_files = get_updates_file("wiki_all_files.json.txt")
-		upd_files = get_updates_file("wiki_force_update.json.txt")
+		upd_files = get_updates_file("wiki_update.json.txt")
 		not_files = get_updates_file("wiki_prohibited.json.txt")
+
 		for pagen in all_files:
+			# pagen is the page name
 			print "pagen: %s " % pagen
+			default_file_name = os.path.join(subdir,all_files[pagen])
+			if pagen in upd_files:
+				
+				update_file_option = 
+				update_file_name = 
 			if pagen in not_files:
 				logging.info("Skipping page - %s " % pagen)
 			elif pagen in upd_files:
 				logging.info("Updating modified page - %s " % pagen)	
 				logging.info("Details of modification are - %s " % all_files[pagen])
+				
+
 				ncf = open(all_files[pagen],'r')	
 				newcontent = ncf.read()
 				# create or update pages

@@ -66,7 +66,6 @@ def get_properties_file():
 	wikiUrl = properties['wikiUrl']
 	spaceKey = properties['spaceKey']
 	parentTitle =  properties['parentTitle'] 
-	getupdate = properties['confluenceForcePageUpdate']
 
 	user = properties['user']
 	password = properties['password']
@@ -107,7 +106,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 		# search for a filename on the page
 		filename_searchstring = r'abiheader</ac\:parameter><ac\:rich-text-body>' + pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt" + r'<'
 		fnm = re.search(filename_searchstring,pgcontent)
-		origfile = pagetitle + "0001.txt"
+		origfile = pagetitle + ".0001.txt"
 		if fnm:
 			logging.info("Page %s found containing file name %s " % (pagetitle,origfile))
 	#		print "fnm: %s " % fnm.group(0)
@@ -121,7 +120,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 				else:
 					return_value = origfile
 			else:
-				altfile = pagetitle + fnm.group(1) + ".txt"
+				altfile = pagetitle + "." + fnm.group(1) + ".txt"
 				logging.info("Page: %s uses file: %s " % (pagetitle,altfile))
 				return_value = "alternative: " + altfile
 				# if group 1 is not 0001, use the alternative filename
@@ -129,7 +128,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 			# the filename may be the same but with capital or lowercase letters (search by "XXXX" or "xxxxx")
 			fnigc = re.search(filename_searchstring,pgcontent,re.IGNORECASE)
 			if fnigc:
-				dupfile = pagetitle + fnigc.group(1) + ".txt"
+				dupfile = pagetitle + "." + fnigc.group(1) + ".txt"
 				logging.info("The page %s already exists but with the filename %s" % (pagetitle,dupfile))
 				return_value = "duplicate: " + dupfile
 			else:	
@@ -147,8 +146,8 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 			# if there is no valid filename in the file, then the file has a fully manual update 		
    			# put invalid filename
    					else:
-   						return_value = "invalid"
-   						logging.info("Page %s found but filename was invalid for reasons other than whitespace" % (pagetitle))
+   						return_value = "invalid" 
+   						logging.info("Page %s found but filename contained invalid characters (other than whitespace)" % (pagetitle))
    	else:
    		logging.info("The page %s could not be found" % pagetitle)
    		return_value = "new"
