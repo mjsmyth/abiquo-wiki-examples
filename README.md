@@ -16,7 +16,7 @@ The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall c
 * When you have checked your results, you can copy the pages to your documentation wiki
 
 ## Input files
-Developers provide a requests.log JSON file with query output from integration tests. The file used in this case has the following format.
+Developers provide a requests.log JSON file with query output from integration tests. The file used in this case has the following content.
 
 | JSON element | Data type |
 | :---------------- |:--------- |
@@ -84,7 +84,7 @@ The example pages should contain the file name in a hidden div with the title ab
 "`abiheader</ac:parameter><ac:rich-text-body>my_own_file.txt<`"
 It should be a valid filename with no spaces.
 
-The example pages are designed to be MANUALLY included in the wiki API reference docs. It is possible to search or retrieve page content (using the Sarah Maddox scripts) and grep for included page names.
+The example pages are designed to be MANUALLY included in the wiki API reference docs. It is possible to search or retrieve page content (using the scripts written by Sarah Maddox, for example) and grep for included page names.
 
 ### read_files_confluence_pages.py
 Get the 0001 files from the subdirectory specified in the options and check if a Confluence page already exists, and if so, check if it has been modified. This script creates three files: `wiki_all_files.json.txt`, `wiki_update.json.txt` and `wiki_prohibited.json.txt`. You can edit any of these files to change which Confluence pages will be updated by the next script.  
@@ -105,8 +105,6 @@ Status strings include:
   * **duplicate**: the `abc_xxx page` was created already and there is also an `abc_XXX.0001.txt` file. By default, this page will be ignored
   * **custom**: this page will be updated with the custom file specified by the user. Note that custom file names cannot contain spaces
   * **invalid**: there is no valid filename, e.g. because the filename contains spaces
-
-
 
 #### wiki_prohibited.json.txt
 Files that must NOT be included in the wiki (e.g. files containing licenses). The file is in the format "Page name" : "File path"
