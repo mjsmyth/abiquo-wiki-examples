@@ -9,7 +9,7 @@ Many thanks to the Abiquo Development team for modifying the integration tests t
 The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall called "Adding a page to Confluence with Python" from 29 June 2008. 
 
 ## Prerequisites
-* I have run these scripts using Python 2.7.9 against Confluence 4.3.2
+* These scripts were run using Python 2.7.9 against Confluence 4.3.2
 * These scripts require Confluence API access to be enabled
 * You should create a Confluence user for running these scripts
 * You should create a separate Confluence wiki space with a suitable parent page (no spaces in name) to hold the example pages. Each example is created in a separate file and page. These pages can be included in API reference documentation
@@ -62,11 +62,11 @@ The file is in the format "Page name" : "\[\<status string\>: \]file name", wher
 Where the 0001 file appears to have been used, only the file name given and no status string is included. 
 
 Status strings include:
-  * **modifier**: if the last user to modify the Confluence page is not the same as the user running the script
-  * **alternative**: the file name pattern is the same but the file name included in the page is different, e.g. a user has changed the 0001 file for an 0002 file 
+  * **modifier**: if the last user to modify the Confluence page is not the same as the user running the script. By default, this page will not be updated
+  * **alternative**: the file name pattern is the same but the file name included in the page is different, e.g. a user has changed the 0001 file for an 0002 file. By default, this page will be updated with the alternative page 
   * **duplicate**: the `abc_xxx` page was created already, and there is also an `abc_XXX.0001.txt` file, where part of the text "XXX" is in a different case. By default, this page will be ignored
-  * **custom**: this page will be updated with the custom file specified by the user. Note that custom file names cannot contain spaces
-  * **invalid**: there is no valid filename, e.g. because the filename contains spaces
+  * **custom**: this page will be updated with the custom file specified by the user. Note that custom file names cannot contain spaces. By default this page will not be updated
+  * **invalid**: there is no valid filename, e.g. because the filename contains spaces. By default this page will not be updated
 
 #### wiki_prohibited.json.txt
 Files that must NOT be included in the wiki (e.g. files containing licenses). The file is in the format "Page name" : "File path"
