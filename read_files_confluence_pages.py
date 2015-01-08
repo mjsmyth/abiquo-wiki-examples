@@ -66,8 +66,8 @@ def get_properties_file():
 	wikiUrl = properties['wikiUrl']
 	spaceKey = properties['spaceKey']
 	parentTitle =  properties['parentTitle'] 
-	getforce = properties['confluenceForcePageUpdate']
-	force = process_stringbool(getforce)
+	getupdate = properties['confluenceForcePageUpdate']
+
 	user = properties['user']
 	password = properties['password']
 	wloc = wikiLoc(wikiUrl,spaceKey,parentTitle)
@@ -75,7 +75,7 @@ def get_properties_file():
 	token = server.confluence2.login(user, password)
 	wauth = wikiAuth(user,password,token)
 	subdir = properties['subdir']
-	return (wloc,wauth,force,server,subdir)
+	return (wloc,wauth,server,subdir)
 
 
 def get_page(wikAuth,wikLoc,pageTitle,server):
@@ -96,59 +96,59 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 	token = server.confluence2.login(wikAuth.user, wikAuth.password)
 	alt_filename = ""
 	gotpage = get_page(wikAuth,wikLoc,pagetitle,server)
-	# update forced only 
-	# A page may already exist with a different name if there is a upper/lower case version of a test
+	# update optional
+	# This section is a bit strung together because I did it over several weeks but basically the idea is to search for 
+	# filenames in the Confluence pages. 
 	return_value = ""
 	if gotpage:
 		pgcontent = ""
 		# copy page content
 		pgcontent = gotpage['content']
 		# search for a filename on the page
-		filename_searchstring = pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt"
+		filename_searchstring = r'abiheader</ac\:parameter><ac\:rich-text-body>' + pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt" + r'<'
 		fnm = re.search(filename_searchstring,pgcontent)
+		origfile = pagetitle + "0001.txt"
 		if fnm:
-			logging.info("Page %s found containing file name %s " % (fnm.group(0),pagetitle))
+			logging.info("Page %s found containing file name %s " % (pagetitle,origfile))
 	#		print "fnm: %s " % fnm.group(0)
 			if fnm.group(1) == "0001":
 				modifier = gotpage['modifier']
 				if modifier != wikAuth.user:
 				#	print "The page %s was manually modified by %s" % (modifier,pagetitle)
-					logging.info("The page %s was manually modified by %s" % (modifier,pagetitle))
+					logging.info("The page %s was manually modified by %s" % (pagetitle,modifier))
 					# store page in update forced only
-					return_vale = "modifer: " + modifier
+					return_value = "modifer: " + modifier
+				else:
+					return_value = origfile
 			else:
-				alt_filename = fnm.group(0)
-				logging.info("Page: %s uses file: %s " % (pagetitle,alt_filename))
-#				alt_filepath = os.path.join(subdir,alt_filename)
-				return_value = "alternative: " + alt_filename
+				altfile = pagetitle + fnm.group(1) + ".txt"
+				logging.info("Page: %s uses file: %s " % (pagetitle,altfile))
+				return_value = "alternative: " + altfile
 				# if group 1 is not 0001, use the alternative filename
 		else:
-			# the filename may be the same but with a by "XXXX" or "xxxxx" (i.e. in capital letters or lower case)
+			# the filename may be the same but with capital or lowercase letters (search by "XXXX" or "xxxxx")
 			fnigc = re.search(filename_searchstring,pgcontent,re.IGNORECASE)
 			if fnigc:
 				logging.info("The page %s already exists but with the filename %s" % (pagetitle,fnigc.group(0)))
 				return_value = "duplicate: " + fnigc.group(0)
 			else:	
-				logging.error("In the wrong place")
 				cs = r'abiheader</ac\:parameter><ac\:rich-text-body>' + '([\w,\.]+)' + r'<'
 				fncust = re.search(cs,pgcontent)
-				ca = r'abiheader</ac:parameter><ac:rich-text-body>'
-				fnca = re.search(ca,pgcontent)
-				if fnca:
-					logging.error ("Hello!")	
 				if fncust:
 					logging.info ("group0: %s |group1: %s " % (fncust.group(0),fncust.group(1)))
-					if fncust.group(1):
-						logging.error ("found something else")
-						logging.info("The page %s exists and has a custom filename %s " % (pagetitle,fncust.group(1)))
-						return_value = "custom: " + fncust.group(1)
-					else:
-						return_value = "invalid"			
-			# if there is no valid auto filename in the file, then the file has a manual update 		
-   			# put custom
-   				else:
-   					return_value = "invalid"
-   					logging.info("The page %s was found but did not contain a valid filename" % (pagetitle))
+					logging.info("The page %s exists and has a custom filename %s " % (pagetitle,fncust.group(1)))
+					return_value = "custom: " + fncust.group(1)
+				else:
+					ca = r'abiheader</ac\:parameter><ac\:rich-text-body>' + '([\w,\.,\s]+)' + r'<'
+					fnca = re.search(ca,pgcontent)
+					if fnca:
+						logging.info("Page %s exists and has an invalid filename containing whitespace %s " % (pagetitle,fnca.group(1)))
+						return_value = "invalid: " + fnca.group(1)			
+			# if there is no valid auto filename in the file, then the file has a fully manual update 		
+   			# put invalid filename
+   					else:
+   						return_value = "invalid"
+   						logging.info("The page %s was found but did not contain a valid filename" % (pagetitle))
    	else:
    		logging.info("The page %s could not be found" % pagetitle)
    		return_value = "new"
