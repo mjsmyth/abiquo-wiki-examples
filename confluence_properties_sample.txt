@@ -6,12 +6,13 @@
 	"password" : "mypassword",
 	"rawLog" : "requests.log",
 	"subdir" : "apiexamples",
-	"MTversion" : "3.2"
-	"updateAll" : "n"
-	"existing" : "y"
-	"modifier" : "n"
-	"alternative" : "y"
-	"duplicate" : "n"
-	"custom" : "n"
-	"invalid" : "y"
+	"MTversion" : "3.2",
+	"rewriteAll" : "n",
+	"updateAll" : "n",
+	"existing" : "y",
+	"modifier" : "n",
+	"alternative" : "y",
+	"duplicate" : "n",
+	"custom" : "n",
+	"invalid" : "n"
 }

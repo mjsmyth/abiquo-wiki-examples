@@ -85,7 +85,7 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	try:	
 		page = server.confluence2.getPage(token, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
-		print ("No page created")
+		print ("No page found")
 		logging.info ("Confluence fault code: %d and string: %s " % (err.faultCode,err.faultString))
 #		logging.info ("Confluence string: %s " % err.faultString)	
 	return page		
@@ -129,13 +129,13 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 			# the filename may be the same but with capital or lowercase letters (search by "XXXX" or "xxxxx")
 			fnigc = re.search(filename_searchstring,pgcontent,re.IGNORECASE)
 			if fnigc:
-				logging.info("The page %s already exists but with the filename %s" % (pagetitle,fnigc.group(0)))
-				return_value = "duplicate: " + fnigc.group(0)
+				dupfile = pagetitle + fnigc.group(1) + ".txt"
+				logging.info("The page %s already exists but with the filename %s" % (pagetitle,dupfile))
+				return_value = "duplicate: " + dupfile
 			else:	
 				cs = r'abiheader</ac\:parameter><ac\:rich-text-body>' + '([\w,\.]+)' + r'<'
 				fncust = re.search(cs,pgcontent)
 				if fncust:
-					logging.info ("group0: %s |group1: %s " % (fncust.group(0),fncust.group(1)))
 					logging.info("The page %s exists and has a custom filename %s " % (pagetitle,fncust.group(1)))
 					return_value = "custom: " + fncust.group(1)
 				else:
@@ -144,11 +144,11 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
 					if fnca:
 						logging.info("Page %s exists and has an invalid filename containing whitespace %s " % (pagetitle,fnca.group(1)))
 						return_value = "invalid: " + fnca.group(1)			
-			# if there is no valid auto filename in the file, then the file has a fully manual update 		
+			# if there is no valid filename in the file, then the file has a fully manual update 		
    			# put invalid filename
    					else:
    						return_value = "invalid"
-   						logging.info("The page %s was found but did not contain a valid filename" % (pagetitle))
+   						logging.info("Page %s found but filename was invalid for reasons other than whitespace" % (pagetitle))
    	else:
    		logging.info("The page %s could not be found" % pagetitle)
    		return_value = "new"
@@ -187,7 +187,7 @@ def main():
 	logging.basicConfig(filename='read_files_pages.log',level=logging.DEBUG)
 	logging.info("***Starting script now ***")
 	# load properties file with wiki properties
-	(loc,auth,force,server,inputSubdir) = get_properties_file()
+	(loc,auth,server,inputSubdir) = get_properties_file()
 
 	allFiles = {}
 	licFiles = {}
@@ -196,8 +196,6 @@ def main():
 	# retrieve the names of all the 0001 files 
 	# and also the license files to add to the prohibited list
 	(allFiles,licFiles) = get_content_file_names(inputSubdir)
-	for lix in licFiles:
-		print "lix: %s" % lix
 
 	# retrieve the parent page where the pages will be stored and get its ID
 	parentPage = get_page(auth,loc,loc.parentTitle,server)
@@ -218,14 +216,11 @@ def main():
 					updFiles[pagen] = pagenUpdatedPage				
 	else:
 		logging.error ("Can't find the parent page %s" % loc.parentTitle)			
-	for lix in licFiles:
-		print "lix: %s" % lix
-	for uix in updFiles:
-		print "uix: %s" % uix		
+
 	# write one JSON file for each list 
 	write_json_file("wiki_all_files.json.txt",allFiles)
 	write_json_file("wiki_prohibited.json.txt",licFiles)
-	write_json_file("wiki_force_update.json.txt",updFiles)
+	write_json_file("wiki_update.json.txt",updFiles)
 
 
 

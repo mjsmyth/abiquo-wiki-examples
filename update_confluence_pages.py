@@ -85,7 +85,7 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	return page		
 	
 
-def create_update_page(wikAuth,wikLoc,force,pagetitle,newcontent,server,parentId):
+def create_update_page(wikAuth,wikLoc,pagetitle,newcontent,server,parentId):
 	# create or update pages as appropriate
 	token = server.confluence2.login(wikAuth.user, wikAuth.password)
 	alt_filename = ""
@@ -145,7 +145,7 @@ def main():
 				newcontent = ncf.read()
 				# create or update pages
 				try:
-					create_update_page(auth,loc,force,pagen,newcontent,server,parentId)
+					create_update_page(auth,loc,pagen,newcontent,server,parentId)
 				except:
 					logging.info("Could not update page - %s " % pagen)
 				ncf.close()
