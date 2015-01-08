@@ -2,7 +2,7 @@
 Automation of Abiquo API examples in the Abiquo wiki with a set of three Python scripts.
 
 ##Disclaimer
-Use these scripts at your own risk because they are provided "as is" and with no guarantees. They were developed for our REST API and environment but I hope they can be useful to others.
+Use these scripts at your own risk because they are provided "as is" and with no guarantees. They were developed to update the documentation of our REST API but I hope they can be useful to others.
 
 ##Acknowledgements
 Many thanks to Enric Ruiz for modifying the integration tests to produce the requests.log file.
@@ -28,6 +28,8 @@ Developers provide a requests.log JSON file with query output from integration t
 ## Properties
 Copy the sample properties file to `confluence_properties.json.txt` and change the values to appropriate ones for your environment. All properties are required.
 
+### General Properties
+
 |Property | Example | Description |
 |:-----|:-----|:------|
 |wikiUrl |  http://URL:port | Wiki URL and port |
@@ -38,10 +40,17 @@ Copy the sample properties file to `confluence_properties.json.txt` and change t
 |rawLog | requests.log | Log file provided by friendly developers with output of integration tests |
 |subdir | apiexamples | Directory under the project directory where example files are stored |
 |MTversion | 3.2 | Default media type version for the API |
-|updateAll | no | Update ALL pages listed in wiki_updates.json.txt |
-|existing | yes | Update existing pages listed in wiki_updates.json.txt |
-|modifier | no | Update pages modified by users that are not the script user |
-|alternative | yes | Update pages with an alternative page number version, e.g. 0002
+
+### Properties related to wiki_updates.json.txt
+See the specific section about this file below
+Unless otherwise specified, the pages listed in wiki_updates.json.txt are updated with the corresponding files listed in the same file. 
+
+|Property | Example | Description |
+|:-----|:-----|:------|
+|updateAll | no | Update ALL pages listed  |
+|existing | yes | Update existing pages listed (without status string) |
+|modifier | no | Update pages modified by users that are not the script user  |
+|alternative | yes | Update pages with an alternative page number version, e.g. 0002 |
 |duplicate | no | Update pages with a duplicate page to the other version e.g. XXXX.0001.txt changes to xxxx.0001.txt and vice versa |
 |custom | no | Update pages with a custom file valide name, e.g. myfile.txt |
 |invalid | yes | Update pages with an invalid file name, e.g. text with spaces. In this case, use the 0001 file |
