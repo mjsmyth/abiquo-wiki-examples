@@ -1,11 +1,11 @@
 # abiquo-wiki-examples
-Automation of Abiquo API examples in the Abiquo wiki with a set of three Python scripts.
+Automation of Abiquo API examples in the Abiquo REST API reference documentation in the Abiquo wiki with a set of three Python scripts.
 
 ##Disclaimer
-Use these scripts at your own risk because they are provided "as is" and with no guarantees. I created this project to update the examples in our REST API documentation, and learnt Python and designed the project as I went along.
+Use these scripts at your own risk because they are provided without any guarantees. I created this project to update the examples in our REST API documentation, and learnt Python and designed the project as I went along. 
 
 ##Acknowledgements
-Many thanks to Enric Ruiz for modifying the integration tests to produce the requests.log file.
+Many thanks to the Abiquo Development team for modifying the integration tests to produce the requests.log file.
 The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall called "Adding a page to Confluence with Python" from 29 June 2008. 
 
 ## Prerequisites
