@@ -5,14 +5,16 @@ Automation of Abiquo API examples in the Abiquo wiki with a set of three Python 
 ## Input files
 Developers provide a requests.log JSON file with query output from integration tests.
 
-  * method: string
-  * url: string
-  * query_params: string
-  * status: int
-  * request_headers: JSON dictionary
-  * response_headers: JSON dictionary
-  * request_payload: JSON or XML, inspect request Content-Type header
-  * response_payload: JSON or XML, inspect response Content-Type header
+ | JSON element | Data type |
+ | ---------------- | --------- |
+ | method | string |
+ | url | string |
+ | query_params | string |
+ | status | int |
+ | request_headers | JSON dictionary |
+ | response_headers | JSON dictionary |
+ | request_payload | JSON or XML, inspect request Content-Type header |
+ | response_payload | JSON or XML, inspect response Content-Type header |
 
 ## Properties
 Copy the sample properties file to the real properties file name and change the values to appropriate ones for your environment.
