@@ -1,9 +1,18 @@
 # abiquo-wiki-examples
+Automation of Abiquo API examples in the Abiquo wiki with a set of three Python scripts.
 
-Automation of Abiquo API examples in the Abiquo wiki with a set of three Python scripts using Python 2.7.
+##Disclaimer
+Use these scripts at your own risk because they are provided "as is" and with no guarantees. They were developed for our REST API and environment but I hope they can be useful to others.
+
+##Acknowledgements
+Many thanks to Enric Ruiz for modifying the integration tests to produce the requests.log file.
+The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall called "Adding a page to Confluence with Python" from 29 June 2008
+
+## Prerequisites
+These scripts require Confluence API access. I have run them on Confluence 4.3.2, using Python 2.7.9.
 
 ## Input files
-Developers provide a requests.log JSON file with query output from integration tests.
+Developers provide a requests.log JSON file with query output from integration tests. The file used in this case has the following format.
 
 | JSON element | Data type |
 | :---------------- |:--------- |
@@ -17,7 +26,25 @@ Developers provide a requests.log JSON file with query output from integration t
 | response_payload | JSON or XML, inspect response Content-Type header |
 
 ## Properties
-Copy the sample properties file to the real properties file name and change the values to appropriate ones for your environment.
+Copy the sample properties file to `confluence_properties.json.txt` and change the values to appropriate ones for your environment. All properties are required.
+
+|Property | Example | Description |
+|:-----|:-----|:------|
+|wikiUrl |  http://URL:port | Wiki URL and port |
+|spaceKey | MSK | Wiki space key |
+|parentTitle | APIExamples | Title of parent page without spaces  |
+|user |  myuser | Wiki user name for running script |
+|password | mypassword | Wiki password for running script |
+|rawLog | requests.log | Log file provided by friendly developers with output of integration tests |
+|subdir | apiexamples | Directory under the project directory where example files are stored |
+|MTversion | 3.2 | Default media type version for the API |
+|updateAll | no | Update ALL pages listed in wiki_updates.json.txt |
+|existing | yes | Update existing pages listed in wiki_updates.json.txt |
+|modifier | no | Update pages modified by users that are not the script user |
+|alternative | yes | Update pages with an alternative page number version, e.g. 0002
+|duplicate | no | Update pages with a duplicate page to the other version e.g. XXXX.0001.txt changes to xxxx.0001.txt and vice versa |
+|custom | no | Update pages with a custom file valide name, e.g. myfile.txt |
+|invalid | yes | Update pages with an invalid file name, e.g. text with spaces. In this case, use the 0001 file |
 
 ## Scripts
 There are three scripts: `process_api_examples.py`, `read_files_confluence_pages.py` and `update_confluence_pages.py`
@@ -35,12 +62,12 @@ It should be a valid filename with no spaces.
 The example pages are designed to be MANUALLY included in the wiki API reference docs. It is possible to search or retrieve page content (using the Sarah Maddox scripts) and grep for included page names.
 
 ### read_files_confluence_pages.py
-Get the 0001 files from the subdirectory specified in the options and check if a Confluence page already exists, and if so, check if it has been modified. This script creates three files: `wiki_all_files.json.txt`, `wiki_force_update.json.txt` and `wiki_prohibited.json.txt`. You can edit any of these files to change which Confluence pages will be updated by the next script.  
+Get the 0001 files from the subdirectory specified in the options and check if a Confluence page already exists, and if so, check if it has been modified. This script creates three files: `wiki_all_files.json.txt`, `wiki_update.json.txt` and `wiki_prohibited.json.txt`. You can edit any of these files to change which Confluence pages will be updated by the next script.  
 
 #### wiki_all_files.json.txt
 This file contains a JSON dictionary of all *0001* files. You could add your own custom files to this list to create them as new pages. The file is in the format "Page name" : "File path"
 
-#### wiki_force_update.json.txt 
+#### wiki_update.json.txt 
 This file contains a JSON dictionary of all files that already have pages. 
 
 The file is in the format "Page name" : "[<status string>: ]file name", where <status string> is one of the status strings in the above list (modifier, alternative, etc.) and an example is "DELETE_adm_dcs_X" : "custom: My_file.txt"
