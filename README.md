@@ -64,7 +64,7 @@ Where the 0001 file appears to have been used, only the file name given and no s
 Status strings include:
   * **modifier**: if the last user to modify the Confluence page is not the same as the user running the script
   * **alternative**: the file name pattern is the same but the file name included in the page is different, e.g. a user has changed the 0001 file for an 0002 file 
-  * **duplicate**: the `abc_xxx page` was created already and there is also an `abc_XXX.0001.txt` file. By default, this page will be ignored
+  * **duplicate**: the `abc_xxx` page was created already, and there is also an `abc_XXX.0001.txt` file, where part of the text "XXX" is in a different case. By default, this page will be ignored
   * **custom**: this page will be updated with the custom file specified by the user. Note that custom file names cannot contain spaces
   * **invalid**: there is no valid filename, e.g. because the filename contains spaces
 
@@ -72,7 +72,7 @@ Status strings include:
 Files that must NOT be included in the wiki (e.g. files containing licenses). The file is in the format "Page name" : "File path"
 
 ### update_confluence_pages.py
-Read `wiki_all_files.json.txt`. If update options are set in the properties file, update all pages found in `wiki_force_update.json.txt` accordingly. Do not add any of the pages in `wiki_prohibited.json.txt` to the wiki.  
+Read `wiki_all_files.json.txt` and create new pages. Depending on the update options set in the properties file, update the pages found in `wiki_update.json.txt` accordingly. Do not add any of the pages in `wiki_prohibited.json.txt` to the wiki.  
 
 ### General Properties
 
@@ -85,12 +85,12 @@ Read `wiki_all_files.json.txt`. If update options are set in the properties file
 |password | mypassword | Wiki password for running script |
 |rawLog | requests.log | Log file provided by friendly developers with output of integration tests |
 |subdir | apiexamples | Directory under the project directory where example files are stored |
-|MTversion | 3.2 | Default media type version for the API |
+|MTversion | 3.2 | Default media type version for the API, which is the current product version |
 
 ### Properties for `update_confluence_pages.py`
 These properties are related to how the update script updates the wiki, based on the `wiki_updates.json.txt` file.
-Also see the specific section about this file below
-Unless otherwise specified, the pages listed in wiki_updates.json.txt are updated with the corresponding files listed in the same file. So it is also possible to modify the behaviour of the script by modifying the file directly, although this is not generally recommended.
+Also see the specific section about this file.
+Unless otherwise specified, the pages listed in wiki_update.json.txt are updated with the corresponding files listed in the same file. So it is also possible to modify the behaviour of the script by modifying the file directly, although this is not generally recommended.
 
 #### Basic properties
 |Property | Default | Description | Default text file |
