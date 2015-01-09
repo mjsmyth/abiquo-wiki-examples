@@ -57,7 +57,7 @@ This file contains a JSON dictionary of all *0001* files. You could add your own
 #### wiki_update.json.txt 
 This file contains a JSON dictionary of all files that already have pages. 
 
-The file is in the format "Page name" : "\[\<status string\>: \]file name", where \<status string\> is one of the status strings in the above list (modifier, alternative, etc.) and an example is "DELETE_adm_dcs_X" : "custom: My_file.txt"
+The file is in the format "Page name" : "\[\<status string\>: \]file name", where \<status string\> is one of the status strings in the above list (modifier, alternative, etc.) and an example is `"DELETE_adm_dcs_X" : "custom: DELETE_adm_dcs_X.txt"`
 
 Where the 0001 file appears to have been used, only the file name given and no status string is included. 
 
@@ -65,7 +65,7 @@ Status strings include:
   * **modifier**: if the last user to modify the Confluence page is not the same as the user running the script. By default, this page will not be updated
   * **alternative**: the file name pattern is the same but the file name included in the page is different, e.g. a user has changed the 0001 file for an 0002 file. By default, this page will be updated with the alternative page 
   * **duplicate**: the `abc_xxx` page was created already, and there is also an `abc_XXX.0001.txt` file, where part of the text "XXX" is in a different case. By default, this page will be ignored
-  * **custom**: this page will be updated with the custom file specified by the user. Note that custom file names cannot contain spaces. By default this page will not be updated
+  * **custom**: this page will be updated with the custom file specified by the user. Note that custom file names should follow the file name standard and end in ".txt" without any numbers. By default this page will not be updated. An example would be `DELETE_adm_dcs_X.txt`
   * **invalid**: there is no valid filename, e.g. because the filename contains spaces. By default this page will not be updated
 
 #### wiki_prohibited.json.txt
