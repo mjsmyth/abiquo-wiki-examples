@@ -42,7 +42,7 @@ There are three scripts: `process_api_examples.py`, `read_files_confluence_pages
   * Read the requests log and create example files in Confluence storage format for all requests with success status code (<400). 
   * The file names are based on the query command and URL, abbreviated according to the list in the `abbreviations.json.txt` file. 
    * An example file name is `DELETE_adm_dcs_X.0001.txt` and an example Confluence page name is `DELETE_adm_dcs_X`. Here X represents an entity number, e.g. Datacenter 6. Note that the abbreviation system is not perfect because the program abbreviates text literals rather than replacing them.
-   * If you create a custom file, it MUST be named the same as your query and with a .txt extension. i.e. Query name `DELETE_adm_dcs_X` and file name `DELETE_adm_dcs_X.txt` 
+   * If you create a custom file, it MUST be named the same as your query, with a REST option (GET, etc) at the front and with a .txt extension. i.e. Query name `DELETE_adm_dcs_X` and file name `DELETE_adm_dcs_X.txt` 
 
 Your custom file/page MUST contain the file name in a hidden div with the title abiheader. So if you create a custom file, you can add it, for example, `DELETE_adm_dcs_X.txt`, and the search will look for it in the abiheader section: 
 "`abiheader</ac:parameter><ac:rich-text-body>DELETE_adm_dcs_X.txt<`"
@@ -103,7 +103,7 @@ Unless otherwise specified, the pages listed in wiki_update.json.txt are updated
 #### Status properties
 Pages that would be updated are listed in the `wiki_updates.json.txt` file. These properties determine how to treat pages with different status string values as described below. Note that the **basic properties** described above completely override these properties. 
 
-If none of the basic properties are set, these status properties determine if the files are updated or not. The text file used to update the page will be the one shown in the Default text file column below, unless the wiki_update.json.txt file is manually edited to modify the file name values.   
+If none of the basic properties are set, these status properties determine if the files are updated or not. The text file used to update the page will be the one shown in the Default text file column below, unless the wiki_update.json.txt file is manually edited to modify the file name values. Note that the file names should have a valid REST option at the start of the name.   
 
 |Property | Default | Description | Default text file | Example file name | 
 |:-----|:-----|:------|:-----|:-----|
