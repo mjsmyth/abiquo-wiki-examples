@@ -97,8 +97,8 @@ Unless otherwise specified, the pages listed in wiki_update.json.txt are updated
 #### Basic properties
 |Property | Default | Description | Default text file |
 |:-----|:-----|:------|:-----|
-|rewriteAll | no | Overwrite ALL pages listed with the default 0001 file. This option has precedence over all other options. If true, ignore ALL other options. | 0001 file | 
-|updateAll | no | Update ALL pages using the **default text file**. If rewriteAll is false, and this option is true, ignore ALL other options | Default text file as supplied in this column in the following table | 
+|rewriteAll | no | Overwrite ALL pages listed with the default 0001 file. This option has precedence over all other options. If true, ignore ALL other options. Creates new pages. | 0001 file | 
+|updateAll | no | Update ALL pages using the **default text file**. If rewriteAll is false, and this option is true, ignore ALL other options. Creates new pages | Default text file as supplied in this column in the following table | 
 
 #### Status properties
 Pages that would be updated are listed in the `wiki_updates.json.txt` file. These properties determine how to treat pages with different status string values as described below. Note that the **basic properties** described above completely override these properties. 
@@ -108,9 +108,10 @@ If none of the basic properties are set, these status properties determine if th
 |Property | Default | Description | Default text file | Example file name | 
 |:-----|:-----|:------|:-----|:-----|
 |existing | yes | Update existing pages listed (i.e. pages with no status string) | 0001 | `GET_xxxx.0001.txt`  |
-|modifier | no | Update pages modified by users that are not the script user  | 0001 | `GET_xxxx.0001.txt`  |
-|alternative | yes | Update pages with an alternative page number version | alternative | `GET_xxxx.0002.txt`  |
-|duplicate | no | Update pages with a duplicate file with the file text of the other version e.g. `GET_XXXX.0001.txt` changes to `GET_xxxx.0001.txt` and vice versa | duplicate | `GET_XXXX.0001.txt`  |
-|custom | yes | Update pages with a valid custom file name | custom | `GET_xxxx.txt`  |
-|invalid | no | Update pages with an invalid file name, e.g. text with spaces | 0001 |`GET_xxx.0001.txt`  |
 |new| no | Create new pages | 0001 |`GET_xxx.0001.txt`| 
+|modifier | no | Update pages modified by users that are not the script user. If false, the pages are not updated  | 0001 | `GET_xxxx.0001.txt`  |
+|alternative | yes | Update pages with an alternative page number version. If false, the pages are not updated | alternative | `GET_xxxx.0002.txt`  |
+|duplicate | no | Update pages with a duplicate file with the file text of the other version e.g. `GET_XXXX.0001.txt` changes to `GET_xxxx.0001.txt` and vice versa. If false, the pages are not updated | duplicate | `GET_XXXX.0001.txt`  |
+|custom | yes | Update pages with a valid custom file name. If false, the pages are not updated | custom | `GET_xxxx.txt`  |
+|invalid | no | Update pages with an invalid file name, e.g. text with spaces. If false, the pages are not updated | 0001 |`GET_xxx.0001.txt`  |
+
