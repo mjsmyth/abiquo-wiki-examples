@@ -6,7 +6,7 @@ Use these scripts at your own risk because they are provided without any guarant
 
 ##Acknowledgements
 Many thanks to the Abiquo Development team for modifying the integration tests to produce the requests.log file.
-The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall called "Adding a page to Confluence with Python" from 29 June 2008. 
+The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall called "Adding a page to Confluence with Python" from 29 June 2008. Many thanks also to stackoverflow!
 
 ## Prerequisites
 * These scripts were run using Python 2.7.9 against Confluence 4.3.2
@@ -113,3 +113,4 @@ If none of the basic properties are set, these status properties determine if th
 |duplicate | no | Update pages with a duplicate file with the file text of the other version e.g. `GET_XXXX.0001.txt` changes to `GET_xxxx.0001.txt` and vice versa | duplicate | `GET_XXXX.0001.txt`  |
 |custom | yes | Update pages with a valid custom file name | custom | `GET_xxxx.txt`  |
 |invalid | no | Update pages with an invalid file name, e.g. text with spaces | 0001 |`GET_xxx.0001.txt`  |
+|new| no | Create new pages | 0001 |`GET_xxx.0001.txt`| 
