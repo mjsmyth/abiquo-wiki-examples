@@ -107,9 +107,9 @@ If none of the basic properties are set, these status properties determine if th
 
 |Property | Default | Description | Default text file | Example file name | 
 |:-----|:-----|:------|:-----|:-----|
-|existing | yes | Update existing pages listed (i.e. pages with no status string) | 0001 | xxxx.0001.txt  |
-|modifier | no | Update pages modified by users that are not the script user  | 0001 | xxxx.0001.txt  |
-|alternative | yes | Update pages with an alternative page number version | alternative | xxxx.0002.txt  |
-|duplicate | no | Update pages with a duplicate file with the file text of the other version e.g. XXXX.0001.txt changes to xxxx.0001.txt and vice versa | duplicate | XXXX.0001.txt  |
-|custom | no | Update pages with a valid custom file name | custom | myfile.txt  |
-|invalid | no | Update pages with an invalid file name, e.g. text with spaces | 0001 | xxx.0001.txt  |
+|existing | yes | Update existing pages listed (i.e. pages with no status string) | 0001 | `GET_xxxx.0001.txt`  |
+|modifier | no | Update pages modified by users that are not the script user  | 0001 | `GET_xxxx.0001.txt`  |
+|alternative | yes | Update pages with an alternative page number version | alternative | `GET_xxxx.0002.txt`  |
+|duplicate | no | Update pages with a duplicate file with the file text of the other version e.g. `GET_XXXX.0001.txt` changes to `GET_xxxx.0001.txt` and vice versa | duplicate | `GET_XXXX.0001.txt`  |
+|custom | yes | Update pages with a valid custom file name | custom | `GET_xxxx.txt`  |
+|invalid | no | Update pages with an invalid file name, e.g. text with spaces | 0001 |`GET_xxx.0001.txt`  |
