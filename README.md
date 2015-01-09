@@ -41,11 +41,12 @@ There are three scripts: `process_api_examples.py`, `read_files_confluence_pages
 
   * Read the requests log and create example files in Confluence storage format for all requests with success status code (<400). 
   * The file names are based on the query command and URL, abbreviated according to the list in the `abbreviations.json.txt` file. 
-   * An example of a file name is `DELETE_adm_dcs_X.0001.txt` and an example Confluence page name is `DELETE_adm_dcs_X`. Here X represents an entity number, e.g. Datacenter 6. Note that the abbreviation system is not perfect because the program abbreviates text literals rather than replacing them.
+   * An example file name is `DELETE_adm_dcs_X.0001.txt` and an example Confluence page name is `DELETE_adm_dcs_X`. Here X represents an entity number, e.g. Datacenter 6. Note that the abbreviation system is not perfect because the program abbreviates text literals rather than replacing them.
+   * If you create a custom file, it MUST be named the same as your query and with a .txt extension. i.e. Query name `DELETE_adm_dcs_X` and file name `DELETE_adm_dcs_X.txt` 
 
-The example pages should contain the file name in a hidden div with the title abiheader. So if you create a custom file, you can add it, for example, my_own_file.txt, and the search will look for it in the abiheader section: 
-"`abiheader</ac:parameter><ac:rich-text-body>my_own_file.txt<`"
-It should be a valid filename with no spaces.
+Your custom file/page MUST contain the file name in a hidden div with the title abiheader. So if you create a custom file, you can add it, for example, `DELETE_adm_dcs_X.txt`, and the search will look for it in the abiheader section: 
+"`abiheader</ac:parameter><ac:rich-text-body>DELETE_adm_dcs_X.txt<`"
+It should be a valid filename with no spaces and valid characters.
 
 The example pages are designed to be MANUALLY included in the wiki API reference docs. It is possible to search or retrieve page content (using the scripts written by Sarah Maddox, for example) and grep for included page names.
 
@@ -53,7 +54,7 @@ The example pages are designed to be MANUALLY included in the wiki API reference
 Get the 0001 files from the subdirectory specified in the options and check if a Confluence page already exists, and if so, check if it has been modified. This script creates three files: `wiki_all_files.json.txt`, `wiki_update.json.txt` and `wiki_prohibited.json.txt`. You can edit any of these files to change which Confluence pages will be updated by the next script.  
 
 #### wiki_all_files.json.txt
-This file contains a JSON dictionary of all *0001* files. You could add your own custom files to this list to create them as new pages. The file is in the format "Page name" : "File path"
+This file contains a JSON dictionary of all *0001* files and all custom ".txt" files. You could add your own custom files to this list to create them as new pages. The file is in the format "Page name" : "File path"
 
 #### wiki_update.json.txt 
 This file contains a JSON dictionary of all files that already have pages. 
