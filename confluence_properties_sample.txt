@@ -14,5 +14,6 @@
 	"alternative" : "y",
 	"duplicate" : "n",
 	"custom" : "n",
-	"invalid" : "n"
+	"invalid" : "n",
+	"new": "n"
 }

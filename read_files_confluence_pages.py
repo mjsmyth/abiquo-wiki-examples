@@ -16,10 +16,10 @@ import logging
 from distutils.util import strtobool
 
 class wikiAuth:
-	def __init__(self,auser,apassword,atoken):
+	def __init__(self,auser,apassword):
 		self.user=auser
 		self.password=apassword
-		self.token=atoken
+
 
 class wikiLoc:
 	def __init__(self,awikiUrl,aspaceKey,aparentTitle):
@@ -71,18 +71,17 @@ def get_properties_file():
 	password = properties['password']
 	wloc = wikiLoc(wikiUrl,spaceKey,parentTitle)
 	server = xmlrpclib.ServerProxy(wikiUrl + '/rpc/xmlrpc')
-	token = server.confluence2.login(user, password)
-	wauth = wikiAuth(user,password,token)
+	wauth = wikiAuth(user,password)
 	subdir = properties['subdir']
 	return (wloc,wauth,server,subdir)
 
 
-def get_page(wikAuth,wikLoc,pageTitle,server):
+def get_page(wikAuth,wikLoc,pageTitle,server,ctoken):
 # returns the page
 	page = {}
-	token = server.confluence2.login(wikAuth.user, wikAuth.password)	
+#	token = server.confluence2.login(wikAuth.user, wikAuth.password)	
 	try:	
-		page = server.confluence2.getPage(token, wikLoc.spaceKey, pageTitle)
+		page = server.confluence2.getPage(ctoken, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
 		print ("No page found")
 		logging.info ("Confluence fault code: %d and string: %s " % (err.faultCode,err.faultString))
@@ -90,11 +89,11 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	return page		
 	
 
-def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
+def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken):
 	# check pages for modification and return modification
-	token = server.confluence2.login(wikAuth.user, wikAuth.password)
+#	atoken = server.confluence2.login(wikAuth.user, wikAuth.password)
 	alt_filename = ""
-	gotpage = get_page(wikAuth,wikLoc,pagetitle,server)
+	gotpage = get_page(wikAuth,wikLoc,pagetitle,server,atoken)
 	# update optional
 	# This section is a bit strung together because I did it over several weeks but basically the idea is to search for 
 	# filenames in the Confluence pages. 
@@ -150,7 +149,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId):
    						logging.info("Page %s found but filename contained invalid characters (other than whitespace)" % (pagetitle))
    	else:
    		logging.info("The page %s could not be found" % pagetitle)
-   		return_value = "new"
+   		return_value = "new: " + pagepathfile
    	return(return_value)			
 
 def create_file_page_list(globPath):
@@ -179,7 +178,21 @@ def get_content_file_names(inputSubdir):
 	licpath = inputSubdir + "/*license*"
 	logging.info("licpath %s " % licpath)
 	licenseFiles = create_file_page_list(licpath)
-	return(oneFiles,licenseFiles)
+
+
+	# get all txt files in the directory, then remove all number files
+	textFiles = {}
+	textFilesOnly = {}
+	txpath = inputSubdir + "/*.txt"
+	logging.info("txpath %s " % txpath)
+	textFiles = create_file_page_list(txpath)
+	for k, v in textFiles.iteritems():
+		found_digits = re.search("(\d{4})",k)
+		if not found_digits:
+			textFilesOnly[k] = v
+			logging.info("No digits in %s" % v)
+	return(oneFiles,licenseFiles,textFilesOnly) 
+
 
 
 def main():
@@ -191,13 +204,14 @@ def main():
 	allFiles = {}
 	licFiles = {}
 	updFiles = {}
+	txtFiles = {}
 
 	# retrieve the names of all the 0001 files 
 	# and also the license files to add to the prohibited list
-	(allFiles,licFiles) = get_content_file_names(inputSubdir)
-
+	(allFiles,licFiles,txtFiles) = get_content_file_names(inputSubdir)
+	mtoken = server.confluence2.login(auth.user, auth.password)
 	# retrieve the parent page where the pages will be stored and get its ID
-	parentPage = get_page(auth,loc,loc.parentTitle,server)
+	parentPage = get_page(auth,loc,loc.parentTitle,server,mtoken)
 	if parentPage:
 	# I don't know how to handle this exception properly 
 	# because if the parent page doesn't exist, it's different to if a normal page doesn't exist
@@ -210,9 +224,23 @@ def main():
 				logging.info ("Skipping page containing license - %s " % pagen)
 			else:
 				pagenPath = allFiles[pagen]
-				pagenUpdatedPage = check_page_mod(auth,loc,pagen,pagenPath,server,parentId)
+				pagenUpdatedPage = check_page_mod(auth,loc,pagen,pagenPath,server,parentId,mtoken)
 				if pagenUpdatedPage:
-					updFiles[pagen] = pagenUpdatedPage				
+					updFiles[pagen] = pagenUpdatedPage	
+		for pagenx in txtFiles:
+			logging.info ("pagenx: %s " % pagenx)
+			if pagenx in licFiles:
+				logging.info ("Skipping page containing license - %s " % pagenx)
+			else:
+				pagenxPath = txtFiles[pagenx]
+				pagenxUpdatedPage = check_page_mod(auth,loc,pagenx,pagenxPath,server,parentId,mtoken)
+				if pagenxUpdatedPage:
+					if pagenx not in allFiles:
+						allFiles[pagenx] = pagenxPath	
+					updFiles[pagenx] = pagenxUpdatedPage
+				else:
+					allFiles[pagenx] = pagenxPath	
+
 	else:
 		logging.error ("Can't find the parent page %s" % loc.parentTitle)			
 
