@@ -14,6 +14,7 @@ The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall c
 * You should create a Confluence user for running these scripts
 * You should create a separate Confluence wiki space with a suitable parent page (no spaces in name) to hold the example pages. Each example is created in a separate file and page. These pages can be included in API reference documentation
 * When you have checked your results, you can copy the pages to your documentation wiki or do whatever else you like with them
+* If you want to add a new query manually, add a file in the format `query_name.txt`, with the filename in the abiheader div. For example, `GET_api_version.txt`
 
 ## Input files
 Developers provide a requests.log JSON file with query output from integration tests. The file used in this case has the following content.
