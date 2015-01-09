@@ -95,8 +95,8 @@ Unless otherwise specified, the pages listed in wiki_update.json.txt are updated
 #### Basic properties
 |Property | Default | Description | Default text file |
 |:-----|:-----|:------|:-----|
-|rewriteAll | no | Overwrite ALL pages listed with the default 0001 file | 0001 file | 
-|updateAll | no | Update ALL pages using the default text file | Default text file as supplied in this column in the following table | 
+|rewriteAll | no | Overwrite ALL pages listed with the default 0001 file. This option has precedence over all other options. If true, ignore ALL other options. | 0001 file | 
+|updateAll | no | Update ALL pages using the **default text file**. If rewriteAll is false, and this option is true, ignore ALL other options | Default text file as supplied in this column in the following table | 
 
 #### Status properties
 Pages that would be updated are listed in the `wiki_updates.json.txt` file. These properties determine how to treat pages with different status string values as described below. Note that the **basic properties** described above completely override these properties. 
