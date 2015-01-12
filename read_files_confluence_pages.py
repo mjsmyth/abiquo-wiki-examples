@@ -16,8 +16,6 @@ import logging
 from distutils.util import strtobool
 import collections
 
-def tree(): return collections.defaultdict(tree)
-
 class wikiAuth:
 	def __init__(self,auser,apassword):
 		self.user=auser
@@ -30,6 +28,7 @@ class wikiLoc:
 		self.spaceKey=aspaceKey
 		self.parentTitle=aparentTitle
 
+def tree(): return collections.defaultdict(tree)
 
 def open_if_not_existing(filename):
 	try:

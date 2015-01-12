@@ -14,6 +14,7 @@ import glob
 import os
 import logging
 from distutils.util import strtobool
+import collections
 
 class wikiAuth:
 	def __init__(self,auser,apassword):
@@ -28,7 +29,7 @@ class wikiLoc:
 		self.parentTitle=aparentTitle
 
 class wikiProp:
-	def __init__(self,arw,aup,aex,amo,aal,adu,acu,aiv):
+	def __init__(self,arw,aup,aex,amo,aal,adu,acu,aiv,ane):
 		self.rewriteAll = arw
 		self.updateAll = aup
 		self.existing = aex
@@ -37,7 +38,9 @@ class wikiProp:
 		self.duplicate = adu
 		self.custom = acu
 		self.invalid = aiv
+		self.new = ane
 
+def tree(): return collections.defaultdict(tree)
 
 def proc_strbool(propbool):
     try:
@@ -86,7 +89,7 @@ def get_properties_file():
 	gne = properties['new']
 	ne = proc_strbool(gne)
 
-	wprop = wikiProp(rw,up,ex,mo,al,du,cu,iv)
+	wprop = wikiProp(rw,up,ex,mo,al,du,cu,iv,ne)
 
 	return (wloc,wauth,server,subdir,wprop)
 
@@ -109,41 +112,41 @@ def get_page(wikAuth,wikLoc,pageTitle,server,etoken):
 	try:	
 		page = server.confluence2.getPage(token, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
-		print ("No page created")
+#		logging.info ("No page exits")
 		logging.info ("Confluence fault code: %d and string: %s " % (err.faultCode,err.faultString))
 #		logging.info ("Confluence string: %s " % err.faultString)	
 	return page		
 	
 
-def create_update_page(wikAuth,wikLoc,pagetitle,newcontent,server,parentId,xtoken):
+def create_update_page(wikAuth,wikLoc,pagtitle,ncontent,server,parentId,xtoken):
 	# create or update pages as appropriate
 	token = server.confluence2.login(wikAuth.user, wikAuth.password)
-	logging.debug("Trying to update page %s " % pagetitle)
+	logging.info("Trying to update page %s " % pagtitle)
 	alt_filename = ""
-	gotpage = get_page(wikAuth,wikLoc,pagetitle,server,token)
+	gotpage = get_page(wikAuth,wikLoc,pagtitle,server,token)
 
 	if gotpage:
-		logging.info("Found existing page %s " % pagetitle)
+		logging.info("Found existing page %s " % pagtitle)
 		# check if the page in Confluence is the 0001 file - and if not, get the file for the different page
 		pgcontent = gotpage['content']
 #		filename_searchstring = pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt"
 		# if there is a filename on the page
 #		fnm = re.search(filename_searchstring,pgcontent)
 #		if fnm:
-		logging.info("Overwrite of page %s " % pagetitle)
+		logging.info("Overwrite of page %s " % pagtitle)
 		#  	print "Forced overwrite of page %s, modified by %s" % (modifier,pagetitle)
-		gotpage['content'] = newcontent
+		gotpage['content'] = ncontent
 #			token = server.confluence2.login(wikAuth.user, wikAuth.password)
 		server.confluence2.storePage(token, gotpage) 			   	
    	else:
-		print "Creating new page %s" % (pagetitle)
-		logging.info ("Creating new page %s" % (pagetitle))
+#		print "Creating new page %s" % (pagetitle)
+		logging.info ("Trying to create new page %s" % (pagtitle))
 		newpage = {}
 	#	print "parentId: %s" % (parentId)
 		newpage['space'] = wikLoc.spaceKey
 		newpage['parentId'] = parentId
-		newpage['title'] = pagetitle
-		newpage['content'] = newcontent
+		newpage['title'] = pagtitle
+		newpage['content'] = ncontent
 
 #		token = server.confluence2.login(wikAuth.user,wikAuth.password)
 		server.confluence2.storePage(token, newpage)
@@ -168,11 +171,11 @@ def open_content_file(subdir,content_file_page,content_file_name):
 def main():
 	logging.basicConfig(filename='update_pages.log',level=logging.DEBUG)
 	# load properties file with wiki properties
-	(loc,auth,server,subdir,prop) = get_properties_file()
-	itoken = server.confluence2.login(auth.user, auth.password)
+	(loc,auth,cserver,subdir,prop) = get_properties_file()
+	itoken = cserver.confluence2.login(auth.user, auth.password)
 	# retrieve the parent page where the pages will be stored and get its ID
 	valid_rest = ['GET','DELETE','OPTIONS','PUT','POST']
-	parentPage = get_page(auth,loc,loc.parentTitle,server,itoken)
+	parentPage = get_page(auth,loc,loc.parentTitle,cserver,itoken)
 
 	if parentPage:
 	# I don't know how to handle this exception properly 
@@ -182,6 +185,7 @@ def main():
 		all_files = get_updates_file("wiki_all_files.json.txt")
 		upd_files = get_updates_file("wiki_update.json.txt")
 		not_files = get_updates_file("wiki_prohibited.json.txt")
+		nup_files = get_updates_file("wiki_nup.json.txt")
 
 		if prop.rewriteAll:
 #			overwrite all pages
@@ -200,7 +204,7 @@ def main():
 							filecontent = open_content_file(subdir,pagen,all_files[pagen])
 							if filecontent:	
 								try:
-									create_update_page(auth,loc,pagen,newcontent,server,parentId,itoken)
+									create_update_page(auth,loc,pagen,newcontent,cserver,parentId,itoken)
 								except:
 									logging.info("Could not create or update page - %s " % pagen)
 		else:							
@@ -236,7 +240,7 @@ def main():
 									filecontent = open_content_file(subdir,pagen,filen)
 									if filecontent:	
 										try:
-											create_update_page(auth,loc,pagen,newcontent,server,parentId,itoken)
+											create_update_page(auth,loc,pagen,newcontent,cserver,parentId,itoken)
 										except:
 											logging.info("Couldn't create or update page - %s " % pagen)
 									else:
@@ -290,7 +294,7 @@ def main():
 									if filecontent:	
 										try:
 											logging.info("Trying to create page %s " % pagen)
-											create_update_page(auth,loc,pagen,newcontent,server,parentId,itoken)
+											create_update_page(auth,loc,pagen,newcontent,cserver,parentId,itoken)
 										except:
 											logging.info("Cannot create or update page - %s - %s " % (pagen,filen))
 									else:
