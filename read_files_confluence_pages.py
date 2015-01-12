@@ -14,6 +14,9 @@ import glob
 import os
 import logging
 from distutils.util import strtobool
+import collections
+
+def tree(): return collections.defaultdict(tree)
 
 class wikiAuth:
 	def __init__(self,auser,apassword):
@@ -83,7 +86,7 @@ def get_page(wikAuth,wikLoc,pageTitle,server,ctoken):
 	try:	
 		page = server.confluence2.getPage(ctoken, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
-		print ("No page found")
+#		print ("No page found")
 		logging.info ("Confluence fault code: %d and string: %s " % (err.faultCode,err.faultString))
 #		logging.info ("Confluence string: %s " % err.faultString)	
 	return page		
@@ -98,6 +101,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
 	# This section is a bit strung together because I did it over several weeks but basically the idea is to search for 
 	# filenames in the Confluence pages. 
 	return_value = ""
+	return_type = ""
 	if gotpage:
 		pgcontent = ""
 		# copy page content
@@ -113,15 +117,18 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
 				modifier = gotpage['modifier']
 				if modifier != wikAuth.user:
 				#	print "The page %s was manually modified by %s" % (modifier,pagetitle)
-					logging.info("The page %s was manually modified by %s" % (pagetitle,modifier))
+					logging.info("The page %s was manually edited by %s" % (pagetitle,modifier))
 					# store page in update forced only
-					return_value = "modifer: " + modifier
+					return_type = "modifier"
+					return_value = modifier
 				else:
+					return_type = "original"
 					return_value = origfile
 			else:
 				altfile = pagetitle + "." + fnm.group(1) + ".txt"
 				logging.info("Page: %s uses file: %s " % (pagetitle,altfile))
-				return_value = "alternative: " + altfile
+				return_type = "alternative"
+				return_value = altfile
 				# if group 1 is not 0001, use the alternative filename
 		else:
 			# the filename may be the same but with capital or lowercase letters (search by "XXXX" or "xxxxx")
@@ -129,28 +136,33 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
 			if fnigc:
 				dupfile = pagetitle + "." + fnigc.group(1) + ".txt"
 				logging.info("The page %s already exists but with the filename %s" % (pagetitle,dupfile))
-				return_value = "duplicate: " + dupfile
+				return_type = "duplicate" 
+				return_value = dupfile
 			else:	
 				cs = r'abiheader</ac\:parameter><ac\:rich-text-body>' + '([\w,\.]+)' + r'<'
 				fncust = re.search(cs,pgcontent)
 				if fncust:
 					logging.info("The page %s exists and has a custom filename %s " % (pagetitle,fncust.group(1)))
-					return_value = "custom: " + fncust.group(1)
+					return_type = "custom" 
+					return_value = fncust.group(1)
 				else:
 					ca = r'abiheader</ac\:parameter><ac\:rich-text-body>' + '([\w,\.,\s]+)' + r'<'
 					fnca = re.search(ca,pgcontent)
 					if fnca:
 						logging.info("Page %s exists and has an invalid filename containing whitespace %s " % (pagetitle,fnca.group(1)))
-						return_value = "invalid: " + fnca.group(1)			
+						return_type = "invalid"
+						return_value = pagepathfile			
 			# if there is no valid filename in the file, then the file has a fully manual update 		
    			# put invalid filename
    					else:
-   						return_value = "invalid" 
+   						return_type = "invalid" 
+						return_value = pagepathfile   						
    						logging.info("Page %s found but filename contained invalid characters (other than whitespace)" % (pagetitle))
    	else:
    		logging.info("The page %s could not be found" % pagetitle)
-   		return_value = "new: " + pagepathfile
-   	return(return_value)			
+   		return_type = "new"
+		return_value = pagepathfile
+   	return(return_type,return_value)			
 
 def create_file_page_list(globPath):
 	pathfiles = glob.glob(globPath)
@@ -187,8 +199,11 @@ def get_content_file_names(inputSubdir):
 	logging.info("txpath %s " % txpath)
 	textFiles = create_file_page_list(txpath)
 	for k, v in textFiles.iteritems():
-		found_digits = re.search("(\d{4})",k)
-		if not found_digits:
+		logging.info("key is %s: " % k)
+		found_digits = re.search("([0-9][0-9][0-9][0-9])",k)
+		if found_digits:
+			logging.info("Found digits in %s " % v)
+		else:	
 			textFilesOnly[k] = v
 			logging.info("No digits in %s" % v)
 	return(oneFiles,licenseFiles,textFilesOnly) 
@@ -205,6 +220,7 @@ def main():
 	licFiles = {}
 	updFiles = {}
 	txtFiles = {}
+	nupFiles = tree()
 
 	# retrieve the names of all the 0001 files 
 	# and also the license files to add to the prohibited list
@@ -224,8 +240,9 @@ def main():
 				logging.info ("Skipping page containing license - %s " % pagen)
 			else:
 				pagenPath = allFiles[pagen]
-				pagenUpdatedPage = check_page_mod(auth,loc,pagen,pagenPath,server,parentId,mtoken)
+				(pagenUpdateType,pagenUpdatedPage) = check_page_mod(auth,loc,pagen,pagenPath,server,parentId,mtoken)
 				if pagenUpdatedPage:
+					nupFiles.setdefault(pagenUpdateType,{})[pagen] = pagenUpdatedPage
 					updFiles[pagen] = pagenUpdatedPage	
 		for pagenx in txtFiles:
 			logging.info ("pagenx: %s " % pagenx)
@@ -233,11 +250,12 @@ def main():
 				logging.info ("Skipping page containing license - %s " % pagenx)
 			else:
 				pagenxPath = txtFiles[pagenx]
-				pagenxUpdatedPage = check_page_mod(auth,loc,pagenx,pagenxPath,server,parentId,mtoken)
+				(pagenxUpdateType,pagenxUpdatedPage) = check_page_mod(auth,loc,pagenx,pagenxPath,server,parentId,mtoken)
 				if pagenxUpdatedPage:
 					if pagenx not in allFiles:
 						allFiles[pagenx] = pagenxPath	
 					updFiles[pagenx] = pagenxUpdatedPage
+					nupFiles.setdefault(pagenxUpdateType,{})[pagenx] = pagenxUpdatedPage
 				else:
 					allFiles[pagenx] = pagenxPath	
 
@@ -248,6 +266,7 @@ def main():
 	write_json_file("wiki_all_files.json.txt",allFiles)
 	write_json_file("wiki_prohibited.json.txt",licFiles)
 	write_json_file("wiki_update.json.txt",updFiles)
+	write_json_file("wiki_nup.json.txt",nupFiles)
 
 
 
