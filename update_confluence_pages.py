@@ -105,9 +105,9 @@ def get_updates_file(work_file):
 def get_page(wikAuth,wikLoc,pageTitle,server,etoken):
 # returns the page
 	page = {}
-#	token = server.confluence2.login(wikAuth.user, wikAuth.password)	
+	token = server.confluence2.login(wikAuth.user, wikAuth.password)	
 	try:	
-		page = server.confluence2.getPage(etoken, wikLoc.spaceKey, pageTitle)
+		page = server.confluence2.getPage(token, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
 		print ("No page created")
 		logging.info ("Confluence fault code: %d and string: %s " % (err.faultCode,err.faultString))
@@ -157,7 +157,7 @@ def open_content_file(subdir,content_file_page,content_file_name):
 	try: 
 		ncf = open(c_file_name,'r')	
 		newcontent = ncf.read()
-		logging.info("Read content file")
+		logging.info("Read content file okay")
 		ncf.close()
 		return newcontent
 	except:
