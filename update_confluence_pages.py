@@ -68,7 +68,7 @@ def get_properties_file():
 	propd['rewriteAll'] = proc_strbool(grw)
 	gup = properties['updateAll']
 	propd['updateAll'] = proc_strbool(gup)
-	gex = properties['existing']
+	gex = properties['original']
 	propd['original'] = proc_strbool(gex)	
 	gmo = properties['modifier']
 	propd['modifier'] = proc_strbool(gmo)
@@ -82,9 +82,6 @@ def get_properties_file():
 	propd['invalid'] = proc_strbool(giv)
 	gne = properties['new']
 	propd['new'] = proc_strbool(gne)
-
-	
-
 	return (wloc,wauth,server,subdir,propd)
 
 def get_updates_file(work_file):
@@ -183,7 +180,7 @@ def main():
 		not_files = get_updates_file("wiki_prohibited.json.txt")
 		nup_files = get_updates_file("wiki_nup.json.txt")
 
-		if prop['rewriteAll'] == True:
+		if prop['rewriteAll']:
 #			overwrite all pages
 #			don't look at updates file
 			for pagen in all_files:
@@ -207,10 +204,11 @@ def main():
 							except:
 								logging.warning ("Could not update page - %s " % pagen)
 							ncf.close()
-		elif prop['updateAll'] == True:
+		elif prop['updateAll']:
 #			read updates file
 #			update all pages using the default options
 			for option in nup_files:
+				logging.info("Processing file option: %s" % option)
 				for pgnup in nup_files[option]:	
 					filenup = nup_files[option][pgnup]
 					if pgnup in not_files:
@@ -236,30 +234,33 @@ def main():
 		else:
 #			read updates file
 #			update according to the options set by user
+			logging.info("Processing user options")
 			for option in nup_files:
-				for pgnup in nup_files[option]:	
-					if prop[option] == True:
-						filenup = nup_files[option][pgnup]
-						if pgnup in not_files:
+				logging.info("Processing file option: %s" % option)
+				if prop[option]:
+					logging.info("Processing files in group: %s" % option)
+					for pnup in nup_files[option]:	
+						logging.info("Processing file: %s" % pnup)
+						filenup = nup_files[option][pnup]
+						if pnup in not_files:
 						# skip license and other prohibited files
-							logging.info("Skipping page - %s " % pagen)	
+							logging.info("Skipping page - %s " % pnup)	
 						else:
-							page_rest = pgnup.split("_") 
+							page_rest = pnup.split("_") 
 							if page_rest:
 								if page_rest[0] not in valid_rest:
-									logging.info("File name is not valid rest - %s " % pgnup)
-								else:
-									logging.info("Trying to open file %s" % filenup)	
-									filecontent = open_content_file(subdir,pgnup,filenup)
-									if filecontent:	
-										try:
-											logging.info("Trying to create page %s " % pgnup)
-											create_update_page(auth,loc,pgnup,filecontent,cserver,parentId)
-										except:
-											logging.info("Cannot create or update page - %s - %s " % (pgnup,filenup))
-									else:
-										logging.info("No file content - %s " % pagnup)				
-
+									logging.info("File name is not valid rest - %s " % pnup)
+								else:	
+									logging.info("Opening file: %s" % filenup)
+									cfp = os.path.join(subdir,filenup)
+									ncf = open(cfp,'r')	
+									newcontent = ncf.read()
+									# create or update pages
+									try:
+										create_update_page(auth,loc,pnup,newcontent,cserver,parentId)
+									except:
+										logging.warning ("Could not update page - %s " % pnup)
+									ncf.close()
 	else:
 		logging.info("Can't find the parent page %s" % loc.parentTitle)			
 
