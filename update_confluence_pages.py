@@ -110,14 +110,12 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	
 
 def create_update_page(wikAuth,wikLoc,pagtitle,ncontent,server,parentId):
-	print ("In create_update_page for %s :" % pagtitle)
-	# create or update pages as appropriate
+# create or update pages as appropriate
 #	token = server.confluence2.login(wikAuth.user, wikAuth.password)
 	logging.info("Trying to update page %s " % pagtitle)
 	alt_filename = ""
 	gotpage = get_page(wikAuth,wikLoc,pagtitle,server)
 	if gotpage:
-		print ("Found existing page")
 		logging.info("Found existing page %s " % pagtitle)
 		# check if the page in Confluence is the 0001 file - and if not, get the file for the different page
 		pgcontent = gotpage['content']

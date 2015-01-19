@@ -45,7 +45,7 @@ def write_json_file(filename,jsondict):
 	# dump json
 	if jsf:
 		json.dump(jsondict, jsf)
-	jsf.close
+		jsf.close
 
 def process_stringbool(userInput):
     try:
