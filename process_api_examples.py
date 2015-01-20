@@ -74,7 +74,8 @@ def get_properties_file():
 		output_subdir = properties['subdir']
 		rawLog = properties['rawLog']
 		MTversion = properties['MTversion']
-		return (output_subdir,rawLog,MTversion)
+		overwriteFiles = properties['overwriteFiles']
+		return (output_subdir,rawLog,MTversion,overwriteFiles)
 
 
 def create_file_name(line,abbreviations,hdrs):
@@ -222,7 +223,7 @@ def process_headers(raw_request_head,raw_response_head):
 	return hedrs
 
 
-def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion):
+def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles):
 #   request = yaml.load(line)
 	code_header = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA['
 	code_footer = ']]></ac:plain-text-body></ac:macro>'
@@ -241,7 +242,10 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 		example_file_name = ex_file_name_plus_dir + "." + "{0:04d}".format(number_of_files) + ".txt"
 		abiheader_file_name = ex_file_name + "." + "{0:04d}".format(number_of_files) + ".txt"
 		# Check that it doesn't already exist and open the file for writing
-		ef = open_if_not_existing(example_file_name)
+		if overwriteFiles = True:
+			ef = open_to_overwrite(example_file_name)
+		else:	
+			ef = open_if_not_existing(example_file_name)
 		if ef:
 			abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + abiheader_file_name + '</ac:rich-text-body></ac:macro>'
 			ef.write(abiheader)
@@ -258,7 +262,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 				ccurl2 = "\t -H 'Accept:%s' \\ \n" % hdrs.reqAc 
 				if re.search(r'abiquo',hdrs.reqAc):
 					if not re.search('version\=[0-9]\.[0-9]',hdrs.reqAc):
-						ccurl2 = "\t -H 'Accept:%s;version=%s' \\ \n" % (hdrs.reqAc,MTversion)
+						ccurl2 = "\t -H 'Accept:%s; version=%s' \\ \n" % (hdrs.reqAc,MTversion)
 				ef.write(ccurl2)
 			ccurl3 = ""
 			ccurl4 = ""
@@ -267,7 +271,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 				ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT
 				if re.search(r'abiquo',hdrs.reqCT):
 					if not re.search('version\=[0-9]\.[0-9]',hdrs.reqCT): 
-						ccurl3 = "\t -H 'Content-Type:%s;version=%s' \\ \n" % (hdrs.reqCT,MTversion) 	
+						ccurl3 = "\t -H 'Content-Type:%s; version=%s' \\ \n" % (hdrs.reqCT,MTversion) 	
 				ef.write(ccurl3)
 				pts = re.search('json|xml|text',hdrs.reqCT)
 				if pts.group(0): 
@@ -381,7 +385,7 @@ def main():
 #			print "ex_file_name: %s" % ex_file_name
 			log_summary_line(line)
 			# Note an empty output directory must exist ! (should sort this out)
-			pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion)	
+			pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles)	
 #			ex_file = open(os.path.join(output_subdir,ex_file_name), 'w')	
 
 # Calls the main() function
