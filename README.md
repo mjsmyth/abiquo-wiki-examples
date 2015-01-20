@@ -31,7 +31,7 @@ Developers provide a requests.log JSON file with query output from integration t
 | response_payload | JSON or XML, inspect response Content-Type header |
 
 ## Properties
-Copy the sample properties file to `confluence_properties.json.txt` and change the values to appropriate ones for your environment. All properties are required. The properties are fully described below.
+Copy the `confluence_properties_sample.txt` to `confluence_properties.json.txt` and change the values to appropriate ones for your environment. All properties are required. The properties are fully described below.
 
 
 ## Scripts
@@ -51,24 +51,25 @@ It should be a valid filename with no spaces and valid characters.
 The example pages are designed to be MANUALLY included in the wiki API reference docs. It is possible to search or retrieve page content (using the scripts written by Sarah Maddox, for example) and grep for included page names.
 
 ### read_files_confluence_pages.py
-Get the 0001 files from the subdirectory specified in the options and check if a Confluence page already exists, and if so, check if it has been modified. This script creates three files: `wiki_all_files.json.txt`, `wiki_update.json.txt` and `wiki_prohibited.json.txt`. You can edit any of these files to change which Confluence pages will be updated by the next script.  
+Get the 0001 files from the subdirectory specified in the options and check if a Confluence page already exists, and if so, check if it has been modified. This script creates three files: `wiki_all_files.json.txt`, `wiki_update.json.txt` and `wiki_prohibited.json.txt` as well as `wiki_options_update.json.txt`. You can edit any of these files to change which Confluence pages will be updated by the next script.  
 
 #### wiki_all_files.json.txt
 This file contains a JSON dictionary of all *0001* files and all custom ".txt" files. You could add your own custom files to this list to create them as new pages. The file is in the format "Page name" : "File path"
+Note that this file contains prohibited files, such as license files.
 
 #### wiki_update.json.txt 
-This file contains a JSON dictionary of all files that already have pages. 
+This file contains a JSON dictionary of all files that already have pages, similar to the `wiki_all_files.json.txt` file.
 
-The file is in the format "Page name" : "\[\<status string\>: \]file name", where \<status string\> is one of the status strings in the above list (modifier, alternative, etc.) and an example is `"DELETE_adm_dcs_X" : "custom: DELETE_adm_dcs_X.txt"`
+#### wiki_options_update.json.txt
+The file is in the format { "option" : { "Page name" : file name", where "option" is one of the status strings in the above list (modifier, alternative, etc.) and an example is `{ "invalid" : "DELETE_adm_dcs_X" : "DELETE_adm_dcs_X.txt"`
 
-Where the 0001 file appears to have been used, only the file name given and no status string is included. 
-
-Status strings include:
+Options from status strings include:
   * **modifier**: if the last user to modify the Confluence page is not the same as the user running the script. By default, this page will not be updated
   * **alternative**: the file name pattern is the same but the file name included in the page is different, e.g. a user has changed the 0001 file for an 0002 file. By default, this page will be updated with the alternative page 
   * **duplicate**: the `abc_xxx` page was created already, and there is also an `abc_XXX.0001.txt` file, where part of the text "XXX" is in a different case. By default, this page will be ignored
   * **custom**: this page will be updated with the custom file specified by the user. Note that custom file names should follow the file name standard and end in ".txt" without any numbers. By default this page will not be updated. An example would be `DELETE_adm_dcs_X.txt`
   * **invalid**: there is no valid filename, e.g. because the filename contains spaces. By default this page will not be updated
+  * **original**: there is a valid filename and it appears to be the 0001 file.
 
 #### wiki_prohibited.json.txt
 Files that must NOT be included in the wiki (e.g. files containing licenses). The file is in the format "Page name" : "File path"
@@ -87,6 +88,7 @@ Read `wiki_all_files.json.txt` and create new pages. Depending on the update opt
 |password | mypassword | Wiki password for running script |
 |rawLog | requests.log | Log file provided by friendly developers with output of integration tests |
 |subdir | apiexamples | Directory under the project directory where example files are stored |
+|overwriteFiles | y | Overwrite existing example files in the subdir |
 |MTversion | 3.2 | Default media type version for the API, which is the current product version |
 
 ### Properties for `update_confluence_pages.py`
@@ -107,7 +109,7 @@ If none of the basic properties are set, these status properties determine if th
 
 |Property | Default | Description | Default text file | Example file name | 
 |:-----|:-----|:------|:-----|:-----|
-|existing | yes | Update existing pages listed (i.e. pages with no status string) | 0001 | `GET_xxxx.0001.txt`  |
+|original | yes | Update existing pages listed (i.e. pages with no status string) | 0001 | `GET_xxxx.0001.txt`  |
 |new| no | Create new pages | 0001 |`GET_xxx.0001.txt`| 
 |modifier | no | Update pages modified by users that are not the script user. If false, the pages are not updated  | 0001 | `GET_xxxx.0001.txt`  |
 |alternative | yes | Update pages with an alternative page number version. If false, the pages are not updated | alternative | `GET_xxxx.0002.txt`  |
