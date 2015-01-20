@@ -19,6 +19,7 @@ from StringIO import StringIO
 from io import BytesIO
 import logging
 import sys
+from distutils.util import strtobool
 
 
 class allheaders:
@@ -49,17 +50,24 @@ def open_if_not_existing(filename):
 	except:
 		logging.warning("File: %s already exists" % filename)
 		return None
-	fobj = os.fdopen(fd, "w")
+	fobj = os.open(fd, "w")
 	return fobj
 
 def open_to_overwrite(filename):
 	try:
-		fd = os.open(filename, os.O_CREATE | os.O_EXLOCK |os.O_WRONLY)	
+		ft = os.open(filename, os.O_CREATE | os.O_WRONLY)	
 	except:
 		logging.warning("Error file: %s " % filename)	
 		return None
-	fob = os.fopen(fd, "w")
+	fob = os.open(ft, "w")
 	return fob	
+
+def proc_strbool(userInput):
+    try:
+        return strtobool(userInput.lower())
+    except ValueError:
+    	logging.warning('Invalid boolean property %s' % userInput)
+        sys.stdout.write('Invalid boolean property')
 
 
 def get_properties_file():
@@ -74,7 +82,8 @@ def get_properties_file():
 		output_subdir = properties['subdir']
 		rawLog = properties['rawLog']
 		MTversion = properties['MTversion']
-		overwriteFiles = properties['overwriteFiles']
+		owFiles = properties['overwriteFiles']
+		overwriteFiles = proc_strbool(owFiles)
 		return (output_subdir,rawLog,MTversion,overwriteFiles)
 
 
@@ -328,10 +337,12 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 					ef.write(nothing)
 			else:
 				ef.write(nothing)
-			ef.close()		
-		# else:
-		#	logging.warning("File %s already exists" % example_file_name)
-		#	sys.stdout.write('File %s already exists' % example_file_name)	
+			ef.close()	
+			return True	
+		else:					
+			logging.warning("File %s already exists" % example_file_name)
+			return False
+
 
 def log_summary_line(line):
 	request = json.loads(line)
@@ -385,8 +396,10 @@ def main():
 #			print "ex_file_name: %s" % ex_file_name
 			log_summary_line(line)
 			# Note an empty output directory must exist ! (should sort this out)
-			pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles)	
+			print_success = pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles)	
 #			ex_file = open(os.path.join(output_subdir,ex_file_name), 'w')	
+			if not print_success:
+				continue
 
 # Calls the main() function
 if __name__ == '__main__':
