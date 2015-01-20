@@ -263,7 +263,7 @@ def main():
 									# create or update pages
 										try:
 											logging.info("Update page: %s " % pnup)
-											create_update_page(auth,loc,pnup,newcontent,cserver,parentId)
+											create_update_page(auth,loc,pnup,filecontent,cserver,parentId)
 										except:
 											logging.warning ("Page error: %s " % pnup)
 									else:

@@ -55,11 +55,11 @@ def open_if_not_existing(filename):
 
 def open_to_overwrite(filename):
 	try:
-		ft = os.open(filename, os.O_CREATE | os.O_WRONLY)	
+		ft = os.open(filename, os.O_CREATE | os.O_EXCL | os.O_WRONLY)
+		fob = None
 	except:
-		logging.warning("Error file: %s " % filename)	
-		return None
-	fob = os.open(ft, "w")
+		logging.warning("Overwrite file: %s " % filename)	
+		fob = os.open(ft, "w")
 	return fob	
 
 def proc_strbool(userInput):
