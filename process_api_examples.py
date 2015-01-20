@@ -242,7 +242,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 		example_file_name = ex_file_name_plus_dir + "." + "{0:04d}".format(number_of_files) + ".txt"
 		abiheader_file_name = ex_file_name + "." + "{0:04d}".format(number_of_files) + ".txt"
 		# Check that it doesn't already exist and open the file for writing
-		if overwriteFiles = True:
+		if overwriteFiles == True:
 			ef = open_to_overwrite(example_file_name)
 		else:	
 			ef = open_if_not_existing(example_file_name)
