@@ -37,7 +37,7 @@ def proc_strbool(propbool):
     try:
         return strtobool(propbool.lower())
     except ValueError:
-    	logging.warning('Invalid boolean property %s' % userInput)
+    	logging.warning('Invalid boolean property %s' % propbool)
 
 def get_properties_file():
 	# Load properties for the script, including wiki properties that can't be stored in a public repo
@@ -112,25 +112,24 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 def create_update_page(wikAuth,wikLoc,pagtitle,ncontent,server,parentId):
 # create or update pages as appropriate
 #	token = server.confluence2.login(wikAuth.user, wikAuth.password)
-	logging.info("Trying to update page %s " % pagtitle)
+	logging.info("PAGE: %s " % pagtitle)
 	alt_filename = ""
 	gotpage = get_page(wikAuth,wikLoc,pagtitle,server)
 	if gotpage:
-		logging.info("Found existing page %s " % pagtitle)
+		logging.info("::Exists" )
 		# check if the page in Confluence is the 0001 file - and if not, get the file for the different page
 		pgcontent = gotpage['content']
 #		filename_searchstring = pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt"
 		# if there is a filename on the page
 #		fnm = re.search(filename_searchstring,pgcontent)
 #		if fnm:
-		logging.info("Overwrite of page %s " % pagtitle)
+		logging.info("::Overwrite ")
 		#  	print "Forced overwrite of page %s, modified by %s" % (modifier,pagetitle)
 		gotpage['content'] = ncontent
 		token = server.confluence2.login(wikAuth.user, wikAuth.password)
 		server.confluence2.storePage(token, gotpage) 			   	
    	else:
-		print "Creating new page %s" % (pagtitle)
-		logging.info ("Trying to create new page %s" % (pagtitle))
+		logging.info("::Create" )
 		newpage = {}
 	#	print "parentId: %s" % (parentId)
 		newpage['space'] = wikLoc.spaceKey
@@ -150,11 +149,11 @@ def open_content_file(subdir,content_file_page,content_file_name):
 	try: 
 		ncf = open(c_file_name,'r')	
 		newcontent = ncf.read()
-		logging.info("Read content file okay")
+		logging.info("Read file: %s" % c_file_name)
 		ncf.close()
 		return newcontent
 	except:
-		logging.info("Could not open content file %s " % c_file_name)
+		logging.info("File error %s " % c_file_name)
 		return ""
 
 
@@ -190,7 +189,7 @@ def main():
 					page_rest = pagen.split("_") 
 					if page_rest:
 						if page_rest[0] not in valid_rest:
-							logging.info("File name is not valid rest - %s " % pagen)
+							logging.warning("File name is not valid rest option - %s " % pagen)
 						else:	
 							cf = all_files[pagen]
 							cfp = os.path.join(subdir,cf)
@@ -200,54 +199,54 @@ def main():
 							try:
 								create_update_page(auth,loc,pagen,newcontent,cserver,parentId)
 							except:
-								logging.warning ("Could not update page - %s " % pagen)
+								logging.error ("Error page: %s " % pagen)
 							ncf.close()
 		elif prop['updateAll']:
 #			read updates file
 #			update all pages using the default options
 			for option in nup_files:
-				logging.info("Processing file option: %s" % option)
+				logging.info("File: %s" % option)
 				for pgnup in nup_files[option]:	
 					filenup = nup_files[option][pgnup]
 					if pgnup in not_files:
 					# skip license and other prohibited files
-						logging.info("Skipping page - %s " % pagen)	
+						logging.info("Skipping: %s " % pgnup)	
 					else:
 						page_rest = pgnup.split("_") 
 						if page_rest:
 							if page_rest[0] not in valid_rest:
-								logging.info("File name is not valid rest - %s " % pgnup)
+								logging.warning("File name is not valid rest - %s " % pgnup)
 							else:
-								logging.info("Trying to open file %s" % filenup)	
+								logging.info("Opening file: %s" % filenup)	
 								filecontent = open_content_file(subdir,pgnup,filenup)
 								if filecontent:	
 									try:
-										logging.info("Trying to create page %s " % pgnup)
+										logging.info("Update page: %s " % pgnup)
 										create_update_page(auth,loc,pgnup,filecontent,cserver,parentId)
 									except:
-										logging.info("Cannot create or update page - %s - %s " % (pgnup,filenup))
+										logging.info("Error page: - %s - %s " % (pgnup,filenup))
 								else:
-									logging.info("No file content - %s " % pagnup)			
+									logging.info("Empty file: %s " % pgnup)			
 
 		else:
 #			read updates file
 #			update according to the options set by user
 			logging.info("Processing user options")
 			for option in nup_files:
-				logging.info("Processing file option: %s" % option)
+				logging.info("File option: %s" % option)
 				if prop[option]:
-					logging.info("Processing files in group: %s" % option)
+					logging.info("Group: %s" % option)
 					for pnup in nup_files[option]:	
-						logging.info("Processing file: %s" % pnup)
+						logging.info("File: %s" % pnup)
 						filenup = nup_files[option][pnup]
 						if pnup in not_files:
 						# skip license and other prohibited files
-							logging.info("Skipping page - %s " % pnup)	
+							logging.info("Skipping: - %s " % pnup)	
 						else:
 							page_rest = pnup.split("_") 
 							if page_rest:
 								if page_rest[0] not in valid_rest:
-									logging.info("File name is not valid rest - %s " % pnup)
+									logging.warning("File name is not valid rest - %s " % pnup)
 								else:	
 									logging.info("Opening file: %s" % filenup)
 									cfp = os.path.join(subdir,filenup)
@@ -255,12 +254,13 @@ def main():
 									newcontent = ncf.read()
 									# create or update pages
 									try:
+										logging.info("Update page: %s " % pnup)
 										create_update_page(auth,loc,pnup,newcontent,cserver,parentId)
 									except:
-										logging.warning ("Could not update page - %s " % pnup)
+										logging.warning ("Page error: %s " % pnup)
 									ncf.close()
 	else:
-		logging.info("Can't find the parent page %s" % loc.parentTitle)			
+		logging.info("No parent page %s" % loc.parentTitle)			
 
 # Calls the main() function
 if __name__ == '__main__':
