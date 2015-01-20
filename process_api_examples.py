@@ -363,7 +363,7 @@ def sub_media_type(mediatype):
 def main():
 	logging.basicConfig(filename='api_examples.log',level=logging.DEBUG)
 	MTversion = ""
-	(output_subdir,rawLog,MTversion) = get_properties_file()
+	(output_subdir,rawLog,MTversion,overwriteFiles) = get_properties_file()
 	#output_subdir = "test_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links and mediatypes for filenames
