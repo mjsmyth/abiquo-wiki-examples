@@ -56,7 +56,6 @@ def open_if_not_existing(filenam):
 def open_to_overwrite(fna):
 	try:	
 		fob = open(fna, "w")
-		fob.write("*** overwriting file ***")
 		return fob
 	except:
 		logging.warning("Can't open: %s" % fna)

@@ -142,19 +142,19 @@ def create_update_page(wikAuth,wikLoc,pagtitle,ncontent,server,parentId):
    		# create a new page
 
 
+
 def open_content_file(subdir,content_file_page,content_file_name):
 	c_file_name = os.path.join(subdir,content_file_name)
 	logging.info("c_file_name: %s " % c_file_name)
-	newcontent = ""
+	newc = ""
 	try: 
-		with open(c_file_name,'r') as ncf:	
-			newcontent = ncf.read()
-		logging.info("Read file: %s" % c_file_name)	
-		return newcontent
+		ncf = open(c_file_name,'r')	
+		newc = ncf.read()
+		logging.info("Read content file okay")
+		ncf.close()
 	except:
-		logging.info("File error %s " % c_file_name)
-		return ""
-
+		logging.info("Could not open content file %s " % c_file_name)
+	return newc
 
 def main():
 	logging.basicConfig(filename='update_pages.log',level=logging.DEBUG)
@@ -191,18 +191,17 @@ def main():
 							logging.warning("File name is not valid rest option - %s " % pagen)
 						else:	
 							cf = all_files[pagen]
-#							cfp = os.path.join(subdir,cf)
-							newcontent = ""
+							cfp = os.path.join(subdir,cf)
 							logging.info("Opening file: %s" % cfp)	
-							newcontent = open_content_file(subdir,pagen,cf)
-							if newcontent:
+							nc = ""
+							nc = open_content_file(subdir,pagen,cf)
+							if nc:
 								try:
-									create_update_page(auth,loc,pagen,newcontent,cserver,parentId)
+									create_update_page(auth,loc,pagen,nc,cserver,parentId)
 								except:
 									logging.error ("Error page: %s " % pagen)
 							else:
-								logging.info("Invalid file: %s " % cf)
-								continue				
+								logging.info("Invalid file: %s " % cf)				
 							# create or update pages
 
 
@@ -223,6 +222,7 @@ def main():
 								logging.warning("File name is not valid rest - %s " % pgnup)
 							else:
 								logging.info("Opening file: %s" % filenup)	
+								filecontent = ""
 								filecontent = open_content_file(subdir,pgnup,filenup)
 								if filecontent:	
 									try:
@@ -232,7 +232,7 @@ def main():
 										logging.info("Error page: - %s - %s " % (pgnup,filenup))
 								else:
 									logging.info("Invalid file: %s " % filenup)		
-									continue	
+
 
 		else:
 #			read updates file
@@ -254,21 +254,20 @@ def main():
 								if page_rest[0] not in valid_rest:
 									logging.warning("File name is not valid rest - %s " % pnup)
 								else:	
-									logging.info("Opening file: %s" % filenup)	
-									filecontent = open_content_file(subdir,pnup,filenup)
-									if filecontent:	
-#									cfp = os.path.join(subdir,filenup)
-#									ncf = open(cfp,'r')	
-#									newcontent = ncf.read()
-									# create or update pages
+									fp = os.path.join(subdir,filenup)
+									try:
+										fff = open(fp,'r')
+										fct = fff.read()
+									except:
+										logging.warning ("File error: %s " % fp)	
+									if fct:
 										try:
 											logging.info("Update page: %s " % pnup)
-											create_update_page(auth,loc,pnup,filecontent,cserver,parentId)
+											create_update_page(auth,loc,pnup,fct,cserver,parentId)
 										except:
-											logging.warning ("Page error: %s " % pnup)
+											logging.warning ("Pg error: %s " % pnup)
 									else:
-										logging.info("Invalid file: %s " % filenup)			
-										continue		
+										logging.warning ("File problem: %s " % pnup)			
 	else:
 		logging.info("No parent page %s" % loc.parentTitle)			
 
