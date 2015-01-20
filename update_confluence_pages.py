@@ -62,6 +62,7 @@ def get_properties_file():
 	wauth = wikiAuth(user,password,token)
 
 	subdir = properties['subdir']
+	custdir = properties['custdir']
 
 	propd = {}
 	grw = properties['rewriteAll']
@@ -82,7 +83,7 @@ def get_properties_file():
 	propd['invalid'] = proc_strbool(giv)
 	gne = properties['new']
 	propd['new'] = proc_strbool(gne)
-	return (wloc,wauth,server,subdir,propd)
+	return (wloc,wauth,server,subdir,custdir,propd)
 
 def get_updates_file(work_file):
 	# Load a json file 
@@ -160,7 +161,7 @@ def main():
 	logging.basicConfig(filename='update_pages.log',level=logging.DEBUG)
 	# load properties file with wiki properties
 	prop = {}
-	(loc,auth,cserver,subdir,prop) = get_properties_file()
+	(loc,auth,cserver,subdir,custdir,prop) = get_properties_file()
 
 	# retrieve the parent page where the pages will be stored and get its ID
 	valid_rest = ['GET','DELETE','OPTIONS','PUT','POST']
@@ -201,7 +202,8 @@ def main():
 								except:
 									logging.error ("Error page: %s " % pagen)
 							else:
-								logging.info("Invalid file: %s " % pgnup)				
+								logging.info("Invalid file: %s " % cf)
+								continue				
 							# create or update pages
 
 
@@ -230,7 +232,8 @@ def main():
 									except:
 										logging.info("Error page: - %s - %s " % (pgnup,filenup))
 								else:
-									logging.info("Invalid file: %s " % pgnup)			
+									logging.info("Invalid file: %s " % filenup)		
+									continue	
 
 		else:
 #			read updates file
@@ -264,6 +267,9 @@ def main():
 											create_update_page(auth,loc,pnup,newcontent,cserver,parentId)
 										except:
 											logging.warning ("Page error: %s " % pnup)
+									else:
+										logging.info("Invalid file: %s " % filenup)			
+										continue		
 	else:
 		logging.info("No parent page %s" % loc.parentTitle)			
 

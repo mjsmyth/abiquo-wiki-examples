@@ -52,6 +52,15 @@ def open_if_not_existing(filename):
 	fobj = os.fdopen(fd, "w")
 	return fobj
 
+def open_to_overwrite(filename):
+	try:
+		fd = os.open(filename, os.O_CREATE | os.O_EXLOCK |os.O_WRONLY)	
+	except:
+		logging.warning("Error file: %s " % filename)	
+		return None
+	fob = os.fopen(fd, "w")
+	return fob	
+
 
 def get_properties_file():
 	# Load properties for the scripts, including wiki properties that can't be stored in a public repo
