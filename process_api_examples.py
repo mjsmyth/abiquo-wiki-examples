@@ -44,23 +44,24 @@ def print_line(line):
 	print "Response payload: %s" % request['response_payload']  # A JSON or an XML, inspect response Content-Type header
 
 
-def open_if_not_existing(filename):
+def open_if_not_existing(filenam):
 	try:
-		fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+		fd = os.open(filenam, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
 	except:
-		logging.warning("File: %s already exists" % filename)
+		logging.warning("File: %s already exists" % filenam)
 		return None
-	fobj = os.open(fd, "w")
+	fobj = open(fd, "w")
 	return fobj
 
-def open_to_overwrite(filename):
-	try:
-		ft = os.open(filename, os.O_CREATE | os.O_EXCL | os.O_WRONLY)
-		fob = None
+def open_to_overwrite(fna):
+	try:	
+		fob = open(fna, "w")
+		fob.write("*** overwriting file ***")
+		return fob
 	except:
-		logging.warning("Overwrite file: %s " % filename)	
-		fob = os.open(ft, "w")
-	return fob	
+		logging.warning("Can't open: %s" % fna)
+		return None
+	
 
 def proc_strbool(userInput):
     try:
@@ -251,10 +252,12 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 		example_file_name = ex_file_name_plus_dir + "." + "{0:04d}".format(number_of_files) + ".txt"
 		abiheader_file_name = ex_file_name + "." + "{0:04d}".format(number_of_files) + ".txt"
 		# Check that it doesn't already exist and open the file for writing
-		if overwriteFiles == True:
+		
+		if overwriteFiles:
 			ef = open_to_overwrite(example_file_name)
 		else:	
 			ef = open_if_not_existing(example_file_name)
+
 		if ef:
 			abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + abiheader_file_name + '</ac:rich-text-body></ac:macro>'
 			ef.write(abiheader)
@@ -340,7 +343,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 			ef.close()	
 			return True	
 		else:					
-			logging.warning("File %s already exists" % example_file_name)
+			logging.warning("Problem: %s" % example_file_name)
 			return False
 
 
