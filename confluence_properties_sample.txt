@@ -7,6 +7,7 @@
 	"rawLog" : "requests.log",
 	"subdir" : "apiexamples",
 	"MTversion" : "3.2",
+	"overwriteFiles" : "y",
 	"rewriteAll" : "n",
 	"updateAll" : "n",
 	"existing" : "y",
