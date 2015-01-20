@@ -147,10 +147,9 @@ def open_content_file(subdir,content_file_page,content_file_name):
 	logging.info("c_file_name: %s " % c_file_name)
 	newcontent = ""
 	try: 
-		ncf = open(c_file_name,'r')	
-		newcontent = ncf.read()
-		logging.info("Read file: %s" % c_file_name)
-		ncf.close()
+		with open(c_file_name,'r') as ncf:	
+			newcontent = ncf.read()
+		logging.info("Read file: %s" % c_file_name)	
 		return newcontent
 	except:
 		logging.info("File error %s " % c_file_name)
@@ -192,15 +191,20 @@ def main():
 							logging.warning("File name is not valid rest option - %s " % pagen)
 						else:	
 							cf = all_files[pagen]
-							cfp = os.path.join(subdir,cf)
-							ncf = open(cfp,'r')	
-							newcontent = ncf.read()
+#							cfp = os.path.join(subdir,cf)
+							newcontent = ""
+							logging.info("Opening file: %s" % cfp)	
+							newcontent = open_content_file(subdir,pagen,cf)
+							if newcontent:
+								try:
+									create_update_page(auth,loc,pagen,newcontent,cserver,parentId)
+								except:
+									logging.error ("Error page: %s " % pagen)
+							else:
+								logging.info("Invalid file: %s " % pgnup)				
 							# create or update pages
-							try:
-								create_update_page(auth,loc,pagen,newcontent,cserver,parentId)
-							except:
-								logging.error ("Error page: %s " % pagen)
-							ncf.close()
+
+
 		elif prop['updateAll']:
 #			read updates file
 #			update all pages using the default options
@@ -226,7 +230,7 @@ def main():
 									except:
 										logging.info("Error page: - %s - %s " % (pgnup,filenup))
 								else:
-									logging.info("Empty file: %s " % pgnup)			
+									logging.info("Invalid file: %s " % pgnup)			
 
 		else:
 #			read updates file
@@ -248,17 +252,18 @@ def main():
 								if page_rest[0] not in valid_rest:
 									logging.warning("File name is not valid rest - %s " % pnup)
 								else:	
-									logging.info("Opening file: %s" % filenup)
-									cfp = os.path.join(subdir,filenup)
-									ncf = open(cfp,'r')	
-									newcontent = ncf.read()
+									logging.info("Opening file: %s" % filenup)	
+									filecontent = open_content_file(subdir,pnup,filenup)
+									if filecontent:	
+#									cfp = os.path.join(subdir,filenup)
+#									ncf = open(cfp,'r')	
+#									newcontent = ncf.read()
 									# create or update pages
-									try:
-										logging.info("Update page: %s " % pnup)
-										create_update_page(auth,loc,pnup,newcontent,cserver,parentId)
-									except:
-										logging.warning ("Page error: %s " % pnup)
-									ncf.close()
+										try:
+											logging.info("Update page: %s " % pnup)
+											create_update_page(auth,loc,pnup,newcontent,cserver,parentId)
+										except:
+											logging.warning ("Page error: %s " % pnup)
 	else:
 		logging.info("No parent page %s" % loc.parentTitle)			
 
