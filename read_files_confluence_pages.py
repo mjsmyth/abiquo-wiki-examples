@@ -39,9 +39,10 @@ def open_if_not_existing(filename):
 	fobj = os.fdopen(fd, "w")
 	return fobj
 
-def write_json_file(filename,jsondict):
+def write_json_file(filename,jsondict,sbdir):
 	# open if not existing
-	jsf = open_if_not_existing(filename)
+	fnp = os.path.join(sbdir,filename)
+	jsf = open_if_not_existing(fnp)
 	# dump json
 	if jsf:
 		json.dump(jsondict, jsf)
@@ -68,7 +69,8 @@ def get_properties_file():
 	server = xmlrpclib.ServerProxy(wikiUrl + '/rpc/xmlrpc')
 	wauth = wikiAuth(user,password)
 	subdir = properties['subdir']
-	return (wloc,wauth,server,subdir)
+	adminSubdir = properties['adminSubdir']
+	return (wloc,wauth,server,subdir,adminSubdir)
 
 
 def get_page(wikAuth,wikLoc,pageTitle,server,ctoken):
@@ -87,9 +89,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
 #	atoken = server.confluence2.login(wikAuth.user, wikAuth.password)
 	alt_filename = ""
 	gotpage = get_page(wikAuth,wikLoc,pagetitle,server,atoken)
-	# update optional
-	# This section is a bit strung together because I did it over several weeks but basically the idea is to search for 
-	# filenames in the Confluence pages. 
+	# Search for file names in the Confluence pages, i.e. text in the abiheader div
 	return_value = ""
 	return_type = ""
 	if gotpage:
@@ -149,7 +149,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
 						return_value = pagepathfile   						
    						logging.info("Page %s found but filename contained invalid characters (other than whitespace)" % (pagetitle))
    	else:
-   		logging.info("The page %s could not be found" % pagetitle)
+   		logging.info("Page %s could not be found" % pagetitle)
    		return_type = "new"
 		return_value = pagepathfile
    	return(return_type,return_value)			
@@ -181,30 +181,41 @@ def get_content_file_names(inputSubdir):
 	logging.info("licpath %s " % licpath)
 	licenseFiles = create_file_page_list(licpath)
 
-
 	# get all txt files in the directory, then remove all number files
+	# this is to search for custom files called page_name.txt
 	textFiles = {}
 	textFilesOnly = {}
 	txpath = inputSubdir + "/*.txt"
 	logging.info("txpath %s " % txpath)
 	textFiles = create_file_page_list(txpath)
 	for k, v in textFiles.iteritems():
-		logging.info("key is %s: " % k)
+	#	logging.debug("key is %s: " % k)
 		found_digits = re.search("([0-9][0-9][0-9][0-9])",k)
-		if found_digits:
-			logging.info("Found digits in %s " % v)
-		else:	
+		if not found_digits:
 			textFilesOnly[k] = v
-			logging.info("No digits in %s" % v)
+	#		logging.debug("No digits in %s" % v)
+
 	return(oneFiles,licenseFiles,textFilesOnly) 
 
 
 
 def main():
 	logging.basicConfig(filename='read_files_pages.log',level=logging.DEBUG)
-	logging.info("***Starting script now ***")
+	logging.info("****** Start of script ******")
 	# load properties file with wiki properties
-	(loc,auth,server,inputSubdir) = get_properties_file()
+	(loc,auth,server,inputSubdir,adminSubdir) = get_properties_file()
+
+	admFiles = {}
+	noFiles = {}
+	admTextFiles = {}
+	(admFiles,noFiles,admTextFiles) = get_content_file_names(adminSubdir)
+	for af in admTextFiles:
+		caf = af + ".json.txt"
+		laf = os.path.join(adminSubdir,caf)
+		paf = caf + ".bkp"
+		naf = os.path.join(adminSubdir,paf)	
+		logging.info ("Found file: %s  and renamed to backup file: %s" % (laf,naf))
+		os.rename (laf,naf)
 
 	allFiles = {}
 	licFiles = {}
@@ -215,17 +226,16 @@ def main():
 	# retrieve the names of all the 0001 files 
 	# and also the license files to add to the prohibited list
 	(allFiles,licFiles,txtFiles) = get_content_file_names(inputSubdir)
+
 	mtoken = server.confluence2.login(auth.user, auth.password)
 	# retrieve the parent page where the pages will be stored and get its ID
 	parentPage = get_page(auth,loc,loc.parentTitle,server,mtoken)
-	if parentPage:
-	# I don't know how to handle this exception properly 
-	# because if the parent page doesn't exist, it's different to if a normal page doesn't exist
-		parentId = parentPage['id']
 
+	if parentPage:
+		parentId = parentPage['id']
 		# try to determine any pages that have been modified and put them in updFiles dictionary
 		for pagen in allFiles:
-			logging.info ("pagen: %s " % pagen)
+			logging.info ("Page name: %s " % pagen)
 			if pagen in licFiles:
 				logging.info ("Skipping page containing license - %s " % pagen)
 			else:
@@ -253,10 +263,10 @@ def main():
 		logging.error ("Can't find the parent page %s" % loc.parentTitle)			
 
 	# write one JSON file for each list 
-	write_json_file("wiki_all_files.json.txt",allFiles)
-	write_json_file("wiki_prohibited.json.txt",licFiles)
-	write_json_file("wiki_update.json.txt",updFiles)
-	write_json_file("wiki_options_update.json.txt",nupFiles)
+	write_json_file("wiki_all_files.json.txt",allFiles,adminSubdir)
+	write_json_file("wiki_prohibited.json.txt",licFiles,adminSubdir)
+	write_json_file("wiki_update.json.txt",updFiles,adminSubdir)
+	write_json_file("wiki_options_update.json.txt",nupFiles,adminSubdir)
 
 
 

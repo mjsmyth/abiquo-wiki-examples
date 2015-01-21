@@ -244,7 +244,7 @@ def format_payload(headerct,payld):
 		payld_return = code_header  + pretty_payload + code_footer
 		return payld_return
 	else:
-		return	(emptypayload)		
+		return emptypayload		
 
 
 def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles):

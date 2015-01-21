@@ -17,6 +17,13 @@ from distutils.util import strtobool
 import collections
 import yaml
 
+class outFileRecord:
+	def __init__(self,apageName,afileName,aoutType):
+		self.pageName = apageName
+		self.fileName = afileName
+		self.outType = aoutType
+
+
 class wikiAuth:
 	def __init__(self,auser,apassword,atoken):
 		self.user=auser
@@ -32,6 +39,26 @@ class wikiLoc:
 
 
 def tree(): return collections.defaultdict(tree)
+
+def open_if_not_existing(filename):
+	try:
+		fd = os.open(filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+	except:
+		logging.error("File: %s already exists" % filename)
+		return None
+	fobj = os.fdopen(fd, "w")
+	return fobj
+
+
+def write_json_file(filename,jsondict,sbdir):
+	# open if not existing
+	fnp = os.path.join(sbdir,filename)
+	jsf = open(fnp,"w")
+#	jsf = open_if_not_existing(fnp)
+	# dump json
+	if jsf:
+		json.dump(jsondict, jsf)
+		jsf.close
 
 def proc_strbool(propbool):
     try:
@@ -62,6 +89,7 @@ def get_properties_file():
 	wauth = wikiAuth(user,password,token)
 
 	subdir = properties['subdir']
+	adminSubdir = properties['adminSubdir']
 
 	propd = {}
 	grw = properties['rewriteAll']
@@ -82,18 +110,19 @@ def get_properties_file():
 	propd['invalid'] = proc_strbool(giv)
 	gne = properties['new']
 	propd['new'] = proc_strbool(gne)
-	return (wloc,wauth,server,subdir,propd)
+	return (wloc,wauth,server,subdir,adminSubdir,propd)
 
-def get_updates_file(work_file):
+def get_updates_file(w_file,sd):
 	# Load a json file 
 	file_dict = {}
+	work_file = os.path.join(sd,w_file)
 	with open(work_file) as wfile:
 		wk_file = wfile.read().replace('\n', '')	
 		wk_file = wk_file.replace('\t', " ")
 		file_dict = yaml.load(wk_file)
 		logging.info("Work_file: %s " % work_file)
 		for ix, ick in enumerate(file_dict):
-			logging.info("%d: %s - %s" % (ix,ick,file_dict[ick]))
+			logging.debug("%d: %s - %s" % (ix,ick,file_dict[ick]))
 	return file_dict
 
 def get_page(wikAuth,wikLoc,pageTitle,server):
@@ -109,39 +138,32 @@ def get_page(wikAuth,wikLoc,pageTitle,server):
 	return page		
 	
 
-def create_update_page(wikAuth,wikLoc,pagtitle,ncontent,server,parentId):
+def create_update_page(wikAuth,wikLoc,pagtitle,ncontent,server,parentId,filea):
 # create or update pages as appropriate
-#	token = server.confluence2.login(wikAuth.user, wikAuth.password)
 	logging.info("PAGE: %s " % pagtitle)
-	alt_filename = ""
 	gotpage = get_page(wikAuth,wikLoc,pagtitle,server)
 	if gotpage:
 		logging.info("::Exists" )
-		# check if the page in Confluence is the 0001 file - and if not, get the file for the different page
-		pgcontent = gotpage['content']
-#		filename_searchstring = pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt"
-		# if there is a filename on the page
-#		fnm = re.search(filename_searchstring,pgcontent)
-#		if fnm:
-		logging.info("::Overwrite ")
-		#  	print "Forced overwrite of page %s, modified by %s" % (modifier,pagetitle)
 		gotpage['content'] = ncontent
-		token = server.confluence2.login(wikAuth.user, wikAuth.password)
-		server.confluence2.storePage(token, gotpage) 			   	
+		oftype = "updated"	
    	else:
 		logging.info("::Create" )
-		newpage = {}
+		oftype = "created"
+		gotpage = {}
 	#	print "parentId: %s" % (parentId)
-		newpage['space'] = wikLoc.spaceKey
-		newpage['parentId'] = parentId
-		newpage['title'] = pagtitle
-		newpage['content'] = ncontent
-
+		gotpage['space'] = wikLoc.spaceKey
+		gotpage['parentId'] = parentId
+		gotpage['title'] = pagtitle
+		gotpage['content'] = ncontent
+	try:
 		token = server.confluence2.login(wikAuth.user,wikAuth.password)
-		server.confluence2.storePage(token, newpage)
-   		# create a new page
-
-
+		server.confluence2.storePage(token, gotpage)
+	except xmlrpclib.Fault as err:
+		oftype = "failed"
+		oFiles[oftype][pagtitle] = filea
+		logging.error("::::Create or update ")
+		logging.error("Confluence fault code: %d and string: %s " % (err.faultCode,err.faultString))	
+	return oftype
 
 def open_content_file(subdir,content_file_page,content_file_name):
 	c_file_name = os.path.join(subdir,content_file_name)
@@ -156,14 +178,37 @@ def open_content_file(subdir,content_file_page,content_file_name):
 		logging.info("Could not open content file %s " % c_file_name)
 	return newc
 
+def process_page(pageNa,fileNa,subDi,prohibFiles,validRest,aut,lo,serverConfl,idParent):
+	if pageNa in prohibFiles:
+		# skip license and other prohibited files
+		logging.info("Skipping prohibited page - %s " % pageNa)
+	else:
+		page_rest = pageNa.split("_") 
+		if page_rest:
+			if page_rest[0] not in validRest:
+				logging.warning("File name is not valid rest option - %s " % pageNa)
+			else:	
+#				cfp = os.path.join(subDi,fileNa)
+#				logging.info("Opening file: %s" % cfp)	
+				nc = ""
+				nc = open_content_file(subDi,pageNa,fileNa)
+				if nc:
+					otype = create_update_page(aut,lo,pageNa,nc,serverConfl,idParent,fileNa)
+				else:
+					otype = "errorfile"
+					logging.info("Invalid file: %s " % fileNa)
+					# create or update pages
+	return otype				
+
 def main():
 	logging.basicConfig(filename='update_pages.log',level=logging.DEBUG)
 	# load properties file with wiki properties
 	prop = {}
-	(loc,auth,cserver,subdir,prop) = get_properties_file()
+	(loc,auth,cserver,subdir,adminSubdir,prop) = get_properties_file()
 
 	# retrieve the parent page where the pages will be stored and get its ID
 	valid_rest = ['GET','DELETE','OPTIONS','PUT','POST']
+	default_options = ['original','alternative','custom','new']
 	parentPage = get_page(auth,loc,loc.parentTitle,cserver)
 
 	if parentPage:
@@ -171,68 +216,34 @@ def main():
 	# because if the parent page doesn't exist, it's different to if a normal page doesn't exist
 		parentId = parentPage['id']
 	# retrieve the content of the files to create as pages
-		all_files = get_updates_file("wiki_all_files.json.txt")
-		upd_files = get_updates_file("wiki_update.json.txt")
-		not_files = get_updates_file("wiki_prohibited.json.txt")
-		nup_files = get_updates_file("wiki_options_update.json.txt")
+		all_files = get_updates_file("wiki_all_files.json.txt",adminSubdir)
+		upd_files = get_updates_file("wiki_update.json.txt",adminSubdir)
+		not_files = get_updates_file("wiki_prohibited.json.txt",adminSubdir)
+		nup_files = get_updates_file("wiki_options_update.json.txt",adminSubdir)
+
+		outfiletype = ""
+		outFiles = tree()
 
 		if prop['rewriteAll']:
-#			overwrite all pages
-#			don't look at updates file
+#			overwrite all pages without any further considerations but don't create license files
 			for pagen in all_files:
+				filen = all_files[pagen]
 			# pagen is the page name
-				if pagen in not_files:
-				# skip license and other prohibited files
-					logging.info("Skipping page - %s " % pagen)
-				else:
-					page_rest = pagen.split("_") 
-					if page_rest:
-						if page_rest[0] not in valid_rest:
-							logging.warning("File name is not valid rest option - %s " % pagen)
-						else:	
-							cf = all_files[pagen]
-							cfp = os.path.join(subdir,cf)
-							logging.info("Opening file: %s" % cfp)	
-							nc = ""
-							nc = open_content_file(subdir,pagen,cf)
-							if nc:
-								try:
-									create_update_page(auth,loc,pagen,nc,cserver,parentId)
-								except:
-									logging.error ("Error page: %s " % pagen)
-							else:
-								logging.info("Invalid file: %s " % cf)				
-							# create or update pages
-
+				outfiletyype = process_page(pagen,filen,subdir,not_files,valid_rest,auth,loc,cserver,parentId)
+				outFiles[outfiletype][pagen]=filen
 
 		elif prop['updateAll']:
 #			read updates file
 #			update all pages using the default options
 			for option in nup_files:
 				logging.info("File: %s" % option)
-				for pgnup in nup_files[option]:	
-					filenup = nup_files[option][pgnup]
-					if pgnup in not_files:
-					# skip license and other prohibited files
-						logging.info("Skipping: %s " % pgnup)	
-					else:
-						page_rest = pgnup.split("_") 
-						if page_rest:
-							if page_rest[0] not in valid_rest:
-								logging.warning("File name is not valid rest - %s " % pgnup)
-							else:
-								logging.info("Opening file: %s" % filenup)	
-								filecontent = ""
-								filecontent = open_content_file(subdir,pgnup,filenup)
-								if filecontent:	
-									try:
-										logging.info("Update page: %s " % pgnup)
-										create_update_page(auth,loc,pgnup,filecontent,cserver,parentId)
-									except:
-										logging.info("Error page: - %s - %s " % (pgnup,filenup))
-								else:
-									logging.info("Invalid file: %s " % filenup)		
-
+				if option in default_options:
+					for pagen in nup_files[option]:	
+						filen = nup_files[option][pagen]
+						outfiletype = process_page(pagen,filen,subdir,not_files,valid_rest,auth,loc,cserver,parentId)
+						outFiles[outfiletype][pagen] = filen
+				else:								
+					logging.info("By default %s is not updated" % option)
 
 		else:
 #			read updates file
@@ -242,29 +253,17 @@ def main():
 				logging.info("File option: %s" % option)
 				if prop[option]:
 					logging.info("Group: %s" % option)
-					for pnup in nup_files[option]:	
-						logging.info("File: %s" % pnup)
-						filenup = nup_files[option][pnup]
-						if pnup in not_files:
-						# skip license and other prohibited files
-							logging.info("Skipping: - %s " % pnup)	
-						else:
-							page_rest = pnup.split("_") 
-							if page_rest:
-								if page_rest[0] not in valid_rest:
-									logging.warning("File name is not valid rest - %s " % pnup)
-								else:	
-									fct = open_content_file(subdir,pnup,filenup)	
-									if fct:
-										try:
-											logging.info("Update page: %s " % pnup)
-											create_update_page(auth,loc,pnup,fct,cserver,parentId)
-										except:
-											logging.warning ("Pg error: %s " % pnup)
-									else:
-										logging.warning ("File problem: %s " % pnup)			
+					for pagen in nup_files[option]:	
+						logging.info("File: %s" % pagen)
+						filen = nup_files[option][pagen]
+						outfiletype = process_page(pagen,filen,subdir,not_files,valid_rest,auth,loc,cserver,parentId)	
+						outFiles[outfiletype][pagen] = filen
+				else:
+					logging.info("Pages of type %s are not selected for update" % option)								
 	else:
-		logging.info("No parent page %s" % loc.parentTitle)			
+		logging.info("No parent page %s" % loc.parentTitle)	
+
+	write_json_file("out_files.json.txt",outFiles,adminSubdir)
 
 # Calls the main() function
 if __name__ == '__main__':
