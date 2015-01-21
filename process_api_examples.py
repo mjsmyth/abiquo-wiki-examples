@@ -47,11 +47,11 @@ def print_line(line):
 def open_if_not_existing(filenam):
 	try:
 		fd = os.open(filenam, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+		fobj = os.fdopen(fd,"w")
+		return fobj
 	except:
 		logging.warning("File: %s already exists" % filenam)
 		return None
-	fobj = open(fd, "w")
-	return fobj
 
 def open_to_overwrite(fna):
 	try:	
@@ -119,11 +119,9 @@ def create_file_name(line,abbreviations,hdrs):
 			if qp:
 				qpValuelist = qp.split("=")
 				qpName = qpValuelist[0]
-				logging.info("qpName: %s" % qpName)
-				# print "qpName: %s" % qpName
+				logging.debug("qpName: %s" % qpName)
 				qpValue = qpValuelist[1]
-				logging.info("qpValue: %s " % qpValue)
-				# print "qpValue: %s " % qpValue
+				logging.debug("qpValue: %s " % qpValue)
 				repQpName = rep_abbrev(qpName,abbreviations)
 				rep_qp_list.append(repQpName)
 				if qpValue == "true":
@@ -149,9 +147,9 @@ def rep_abbrev(text,abbreviations):
 def rep_text(text,abbreviations):
 	for abbi, abbr in iter(sorted(abbreviations.iteritems(),reverse=True)):
 		text = text.replace(abbi,abbr)
-# If it's a storage pool name		
+# If it's a storage pool or a task name		
 	if "-" in text:
-		text = "X"
+		text = "X"	
 # If it's an ID 	
 	if re.match("[0-9]",text):
 		text = "X"
@@ -231,6 +229,23 @@ def process_headers(raw_request_head,raw_response_head):
 	hedrs.hprint()
 	return hedrs
 
+def format_payload(headerct,payld):
+	code_header = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA['
+	code_footer = ']]></ac:plain-text-body></ac:macro>'
+	nothing = "<p>--none--</p>" 
+	emptypayload = "<p>--empty--</p>"
+	pretty_payload = ""
+	pretty_payload = process_payload(headerct,payld)
+	if not headerct:
+		return (nothing)
+	if not payld:
+		return (nothing)	 
+	if pretty_payload != "":
+		payld_return = code_header  + pretty_payload + code_footer
+		return payld_return
+	else:
+		return	(emptypayload)		
+
 
 def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles):
 #   request = yaml.load(line)
@@ -243,15 +258,15 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 
 		ex_file_name_plus_dir = os.path.join(output_subdir,ex_file_name)
 
-		# Append an X to the list... number of X-es = number of files created! MEGA CUTRE! :-p
-		# I was practising initialising lists :-)
+		# Append an X to the list... number of X-es = number of files created!
 		files_dictionary.setdefault(ex_file_name_plus_dir,[]).append("X")
 		number_of_files = len(files_dictionary[ex_file_name_plus_dir]) 
+
 		# Pad the integer so that the files are nicely named
 		example_file_name = ex_file_name_plus_dir + "." + "{0:04d}".format(number_of_files) + ".txt"
 		abiheader_file_name = ex_file_name + "." + "{0:04d}".format(number_of_files) + ".txt"
 		# Check that it doesn't already exist and open the file for writing
-		
+		nothing = "<p>--none--</p>" 
 		if overwriteFiles:
 			ef = open_to_overwrite(example_file_name)
 		else:	
@@ -298,51 +313,29 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 			stat = "<p><strong>Success status code</strong>: %s </p>" % request['status'] # int
 			ef.write(stat)
 
-	#		reqh = "Request headers: %s" % request['request_headers'] # It's a JSON dictionary
-			nothing = "<p>--none--</p>" 
-			emptypayload = "<p>--empty--</p>"
 			reqh = "<p><strong>Request payload</strong>:</p>"
 			ef.write (reqh)
 
-			if hdrs.reqCT:
-				if request['request_payload']:
-					pretty_payload = ""
-					pretty_payload = process_payload(hdrs.reqCT,request['request_payload'])
-					if pretty_payload != "":
-						ef.write (code_header)
-						ef.write (pretty_payload)
-						ef.write (code_footer)
-					else:
-						ef.write (emptypayload)		
-				else:
-					ef.write(nothing)
-			else:
-				ef.write(nothing)		
+			processed_request_payload = ""
+			processed_request_payload = format_payload(hdrs.reqCT,request['request_payload'])
+		
+			if processed_request_payload:
+				ef.write(processed_request_payload)
 
 			resh = "<p><strong>Response payload</strong>:</p>"
 			ef.write (resh)
-	#		accept_type_list = request_head['Accept']
+
 			if 	request['status'] != 204:
-				if hdrs.rspCT:
-					if request['response_payload']:
-						pretty_payload = ""
-						pretty_payload = process_payload(hdrs.rspCT,request['response_payload'])
-						if pretty_payload != "":
-							ef.write (code_header)
-							ef.write (pretty_payload)
-							ef.write (code_footer)
-						else:
-							ef.write (emptypayload)
-					else:
-						ef.write(nothing)
-				else:
-					ef.write(nothing)
+				processed_response_payload = ""
+				processed_response_payload = format_payload(hdrs.rspCT,request['response_payload'])
+				if processed_response_payload:
+					ef.write(processed_response_payload)
 			else:
 				ef.write(nothing)
 			ef.close()	
 			return True	
 		else:					
-			logging.warning("Problem: %s" % example_file_name)
+			logging.warning("File problem: %s" % example_file_name)
 			return False
 
 
@@ -380,7 +373,7 @@ def main():
 	#output_subdir = "test_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links and mediatypes for filenames
-# Do not replace the word license
+# Note that the word "license" should not be included in the abbreviation file
 	abbreviations = {}
 	with open("abbreviations.json.txt") as afile:
 	 	abbrev_file = afile.read().replace('\n', '')
@@ -395,13 +388,13 @@ def main():
 			hdrs = process_headers(raw_request_headers,raw_response_headers)
 			ex_file_name = create_file_name(line,abbreviations,hdrs)
 			logging.info('ex_file_name: %s' % ex_file_name)
-#			print "ex_file_name: %s" % ex_file_name
 			log_summary_line(line)
-			# Note an empty output directory must exist ! (should sort this out)
-			print_success = pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles)	
+			# The output directory must exist. If overwriteFiles is set, existing files will be overwritten
+			try:
+				pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles)	
 #			ex_file = open(os.path.join(output_subdir,ex_file_name), 'w')	
-			if not print_success:
-				continue
+			except:
+				logging.warning("Could not write example file: %s " % ex_file_name)
 
 # Calls the main() function
 if __name__ == '__main__':

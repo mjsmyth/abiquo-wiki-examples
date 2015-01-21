@@ -47,13 +47,6 @@ def write_json_file(filename,jsondict):
 		json.dump(jsondict, jsf)
 		jsf.close
 
-def process_stringbool(userInput):
-    try:
-        return strtobool(userInput.lower())
-    except ValueError:
-    	logging.warning('Invalid boolean property %s' % userInput)
-        sys.stdout.write('Invalid boolean property')
-
 
 def get_properties_file():
 	# Load properties for the script, including wiki properties that can't be stored in a public repo
@@ -85,9 +78,7 @@ def get_page(wikAuth,wikLoc,pageTitle,server,ctoken):
 	try:	
 		page = server.confluence2.getPage(ctoken, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
-#		print ("No page found")
 		logging.info ("Confluence fault code: %d and string: %s " % (err.faultCode,err.faultString))
-#		logging.info ("Confluence string: %s " % err.faultString)	
 	return page		
 	
 
@@ -111,7 +102,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
 		origfile = pagetitle + ".0001.txt"
 		if fnm:
 			logging.info("Page %s found containing file name %s " % (pagetitle,origfile))
-	#		print "fnm: %s " % fnm.group(0)
+			logging.debug("fnm: %s " % fnm.group(0))
 			if fnm.group(1) == "0001":
 				modifier = gotpage['modifier']
 				if modifier != wikAuth.user:
