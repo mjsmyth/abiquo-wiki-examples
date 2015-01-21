@@ -174,7 +174,7 @@ def main():
 		all_files = get_updates_file("wiki_all_files.json.txt")
 		upd_files = get_updates_file("wiki_update.json.txt")
 		not_files = get_updates_file("wiki_prohibited.json.txt")
-		nup_files = get_updates_file("wiki_nup.json.txt")
+		nup_files = get_updates_file("wiki_options_update.json.txt")
 
 		if prop['rewriteAll']:
 #			overwrite all pages
@@ -254,12 +254,7 @@ def main():
 								if page_rest[0] not in valid_rest:
 									logging.warning("File name is not valid rest - %s " % pnup)
 								else:	
-									fp = os.path.join(subdir,filenup)
-									try:
-										fff = open(fp,'r')
-										fct = fff.read()
-									except:
-										logging.warning ("File error: %s " % fp)	
+									fct = open_content_file(subdir,pnup,filenup)	
 									if fct:
 										try:
 											logging.info("Update page: %s " % pnup)

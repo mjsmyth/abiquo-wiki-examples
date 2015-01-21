@@ -265,7 +265,7 @@ def main():
 	write_json_file("wiki_all_files.json.txt",allFiles)
 	write_json_file("wiki_prohibited.json.txt",licFiles)
 	write_json_file("wiki_update.json.txt",updFiles)
-	write_json_file("wiki_nup.json.txt",nupFiles)
+	write_json_file("wiki_options_update.json.txt",nupFiles)
 
 
 
