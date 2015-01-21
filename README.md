@@ -1,19 +1,19 @@
 # abiquo-wiki-examples
-Automation of Abiquo API examples in the Abiquo REST API reference documentation in the Abiquo wiki with a set of three Python scripts.
+Automation of Abiquo API examples in the Abiquo REST API reference documentation in the Abiquo Confluence wiki with a set of three Python scripts.
 
 ##Disclaimer
 Use these scripts at your own risk because they are provided without any guarantees. I created this project to update the examples in our REST API documentation, and learnt Python and designed the project as I went along. 
 
 ##Acknowledgements
 Many thanks to the Abiquo Development team for modifying the integration tests to produce the requests.log file.
-The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall called "Adding a page to Confluence with Python" from 29 June 2008. Many thanks also to stackoverflow!
+The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall called "Adding a page to Confluence with Python" from 29 June 2008. Many thanks also to Stack Overflow!
 
 ## Prerequisites
 * These scripts were run using Python 2.7.9 against Confluence 4.3.2
 * These scripts require Confluence API access to be enabled
-* You should create a Confluence user for running these scripts
-* You should create a separate Confluence wiki space with a suitable parent page (no spaces in name) to hold the example pages. Each example is created in a separate file and page. These pages can be included in API reference documentation
-* When you have checked your results, you can copy the pages to your documentation wiki or do whatever else you like with them
+* You should create a separate Confluence user for running these scripts
+* You should create a separate Confluence wiki space with a suitable parent page (with no spaces in the name) to hold the example pages. Each example is created in a separate file and page (TODO: use a template file). 
+* When you have checked your results, you can copy the pages to your documentation wiki or do whatever else you like with them. For example, we have "manually" included the pages in our API reference documentation
 * If you want to add a new query manually, add a file in the format `query_name.txt`, with the filename in the abiheader div. For example, `GET_api_version.txt`
 
 ## Input files
@@ -48,7 +48,7 @@ Your custom file/page MUST contain the file name in a hidden div with the title 
 "`abiheader</ac:parameter><ac:rich-text-body>DELETE_adm_dcs_X.txt<`"
 It should be a valid filename with no spaces and valid characters.
 
-The example pages are designed to be MANUALLY included in the wiki API reference docs. It is possible to search or retrieve page content (using the scripts written by Sarah Maddox, for example) and grep for included page names.
+The example pages are designed to be manually included in wiki API reference docs. It is possible to search or retrieve page content (using the scripts written by Sarah Maddox, for example) and grep for included page names.
 
 ### read_files_confluence_pages.py
 Get the 0001 files from the subdirectory specified in the options and check if a Confluence page already exists, and if so, check if it has been modified. This script creates three files: `wiki_all_files.json.txt`, `wiki_update.json.txt` and `wiki_prohibited.json.txt` as well as `wiki_options_update.json.txt`. You can edit any of these files to change which Confluence pages will be updated by the next script.  
@@ -58,7 +58,7 @@ This file contains a JSON dictionary of all *0001* files and all custom ".txt" f
 Note that this file contains prohibited files, such as license files.
 
 #### wiki_update.json.txt 
-This file contains a JSON dictionary of all files that already have pages, similar to the `wiki_all_files.json.txt` file.
+This file is deprecated. It contains a JSON dictionary of all files that already have pages, similar to the `wiki_all_files.json.txt` file.
 
 #### wiki_options_update.json.txt
 The file is in the format { "option" : { "Page name" : file name", where "option" is one of the status strings in the above list (modifier, alternative, etc.) and an example is `{ "invalid" : "DELETE_adm_dcs_X" : "DELETE_adm_dcs_X.txt"`
@@ -88,6 +88,7 @@ Read `wiki_all_files.json.txt` and create new pages. Depending on the update opt
 |password | mypassword | Wiki password for running script |
 |rawLog | requests.log | Log file provided by friendly developers with output of integration tests |
 |subdir | apiexamples | Directory under the project directory where example files are stored |
+|adminSubdir | admin | Directory under the project directory where admin files are stored |
 |overwriteFiles | y | Overwrite existing example files in the subdir |
 |MTversion | 3.2 | Default media type version for the API, which is the current product version |
 
@@ -116,4 +117,10 @@ If none of the basic properties are set, these status properties determine if th
 |duplicate | no | Update pages with a duplicate file with the file text of the other version e.g. `GET_XXXX.0001.txt` changes to `GET_xxxx.0001.txt` and vice versa. If false, the pages are not updated | duplicate | `GET_XXXX.0001.txt`  |
 |custom | yes | Update pages with a valid custom file name. If false, the pages are not updated | custom | `GET_xxxx.txt`  |
 |invalid | no | Update pages with an invalid file name, e.g. text with spaces. If false, the pages are not updated | 0001 |`GET_xxx.0001.txt`  |
+
+### Results file
+The `update_confluence_pages.py` script creates an output file called `out_files.json.txt`. This is a list of all the results of attempts to read example files and create or update Confluence pages. There are four status categories (updated, created, failed and errorfile) and the file is divided into these categories. For example, 
+`{ "updated" : "DELETE_adm_dcs_X" : "DELETE_adm_dcs_X.txt"`
+
+
 
