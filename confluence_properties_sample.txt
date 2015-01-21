@@ -1,12 +1,20 @@
 {
 	"wikiUrl" : "http://URL:port",
-	"spaceKey" : "myspacekey",
-	"parentTitle" : "Examples Parent Page",
-	"confluenceForcePageUpdate" : "n",
-	"user" : "myusername",
+	"spaceKey" : "MSK",
+	"parentTitle" : "APIExamples",
+	"user" : "myuser",
 	"password" : "mypassword",
-	"getOverwrite" : "y",
 	"rawLog" : "requests.log",
-	"subdir" : "example_files",
-	"MTversion" : "3.2"
+	"subdir" : "apiexamples",
+	"MTversion" : "3.2",
+	"overwriteFiles" : "y",
+	"rewriteAll" : "n",
+	"updateAll" : "n",
+	"existing" : "y",
+	"modifier" : "n",
+	"alternative" : "y",
+	"duplicate" : "n",
+	"custom" : "n",
+	"invalid" : "n",
+	"new": "n"
 }
