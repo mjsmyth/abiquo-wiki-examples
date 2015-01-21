@@ -94,7 +94,7 @@ Read `wiki_all_files.json.txt` and create new pages. Depending on the update opt
 ### Properties for `update_confluence_pages.py`
 These properties are related to how the update script updates the wiki, based on the `wiki_updates.json.txt` file.
 Also see the specific section about this file.
-Unless otherwise specified, the pages listed in wiki_update.json.txt are updated with the corresponding files listed in the same file. So it is also possible to modify the behaviour of the script by modifying the file directly, although this is not generally recommended.
+Unless otherwise specified, the pages listed in wiki_options_update.json.txt are updated with the corresponding files listed in the same file. So it is also possible to modify the behaviour of the script by modifying the file directly, although this is not generally recommended.
 
 #### Basic properties
 |Property | Default | Description | Default text file |
