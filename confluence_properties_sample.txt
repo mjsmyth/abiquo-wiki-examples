@@ -14,9 +14,9 @@
 	"updateAll" : "n",
 	"original" : "y",
 	"modifier" : "n", 
-	"alternative" : "n",
+	"alternative" : "y",
 	"duplicate" : "n",
 	"custom" : "y",
 	"invalid" : "n",
-	"new": "n"
+	"new": "y"
 }

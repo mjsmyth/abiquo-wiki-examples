@@ -33,13 +33,13 @@ class allheaders:
 #		print "self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT)			
 		logging.debug ("self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT))
  
-class example:
-	def __init__(self,afName,acurl,astatus,arequestData,aresponseData):
-		self.fName = afName
-		self.curl = acurl 
-		self.status = astatus
-		self.requestData = arequestData
-		self.responseData = aresponseData
+# class example:
+# 	def __init__(self,afName,acurl,astatus,arequestData,aresponseData):
+# 		self.fName = afName
+# 		self.curl = acurl 
+# 		self.status = astatus
+# 		self.requestData = arequestData
+# 		self.responseData = aresponseData
 
 def print_line(line):
 	request = yaml.load(line)
