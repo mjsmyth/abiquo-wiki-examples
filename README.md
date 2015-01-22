@@ -12,7 +12,8 @@ The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall c
 * These scripts were run using Python 2.7.9 against Confluence 4.3.2
 * These scripts require Confluence API access to be enabled
 * You should create a separate Confluence user for running these scripts
-* You should create a separate Confluence wiki space with a suitable parent page (with no spaces in the name) to hold the example pages. Each example is created in a separate file and page (TODO: use a template file). 
+* You should create a separate Confluence wiki space with a suitable parent page (with no spaces in the name) to hold the example pages. 
+* Each example is created in a separate file and page using a mustache template, so you can customise this template file
 * When you have checked your results, you can copy the pages to your documentation wiki or do whatever else you like with them. For example, we have "manually" included the pages in our API reference documentation
 * If you want to add a new query manually, add a file in the format `query_name.txt`, with the filename in the abiheader div. For example, `GET_api_version.txt`
 
@@ -89,6 +90,7 @@ Read `wiki_all_files.json.txt` and create new pages. Depending on the update opt
 |rawLog | requests.log | Log file provided by friendly developers with output of integration tests |
 |subdir | apiexamples | Directory under the project directory where example files are stored |
 |adminSubdir | admin | Directory under the project directory where admin files are stored |
+|template | template.mustache | Mustache template for creating Confluence wiki page or what 
 |overwriteFiles | y | Overwrite existing example files in the subdir |
 |MTversion | 3.2 | Default media type version for the API, which is the current product version |
 
