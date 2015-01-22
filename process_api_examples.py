@@ -19,6 +19,7 @@ from StringIO import StringIO
 from io import BytesIO
 import logging
 import sys
+import pystache
 from distutils.util import strtobool
 
 
@@ -32,6 +33,14 @@ class allheaders:
 #		print "self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT)			
 		logging.debug ("self.reqAc: %s  self.reqCT: %s  self.rspCT %s " % (self.reqAc,self.reqCT,self.rspCT))
  
+# class example:
+# 	def __init__(self,afName,acurl,astatus,arequestData,aresponseData):
+# 		self.fName = afName
+# 		self.curl = acurl 
+# 		self.status = astatus
+# 		self.requestData = arequestData
+# 		self.responseData = aresponseData
+
 def print_line(line):
 	request = yaml.load(line)
 #	request = json.loads(line)
@@ -79,12 +88,14 @@ def get_properties_file():
 		properties = json.loads(prop_file)
 		for ick in (properties):
 			logging.info("Property: %s : %s " % (ick,properties[ick]))
-		output_subdir = properties['subdir']
+		template = properties['template']	
+		adminSubdir = properties['adminSubdir']
+		subdir = properties['subdir']
 		rawLog = properties['rawLog']
 		MTversion = properties['MTversion']
 		owFiles = properties['overwriteFiles']
 		overwriteFiles = proc_strbool(owFiles)
-		return (output_subdir,rawLog,MTversion,overwriteFiles)
+		return (subdir,rawLog,MTversion,overwriteFiles,adminSubdir,template)
 
 
 def create_file_name(line,abbreviations,hdrs):
@@ -247,7 +258,99 @@ def format_payload(headerct,payld):
 		return emptypayload		
 
 
-def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles):
+def mustache_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles,adminSubdir,template):
+#   request = yaml.load(line)
+	request = json.loads(line)
+	exdict = {}
+	if request['status'] < 400:
+	# write the request to a file, but if there are already queries from this run, append numbers to the files
+
+		ex_file_name_plus_dir = os.path.join(subdir,ex_file_name)
+
+		if ex_file_name_plus_dir not in files_dictionary:
+			files_dictionary[ex_file_name_plus_dir] = 1
+		else:
+			files_dictionary[ex_file_name_plus_dir] += 1
+		
+		if ex_file_name_plus_dir in files_dictionary:
+			number_of_files = files_dictionary[ex_file_name_plus_dir] 
+
+		# Pad the integer so that the files are nicely named
+		example_file_name = ex_file_name_plus_dir + "." + "{0:04d}".format(number_of_files) + ".txt"
+		abiheader_file_name = ex_file_name + "." + "{0:04d}".format(number_of_files) + ".txt"
+		exdict['ofName'] = abiheader_file_name
+		# Check that it doesn't already exist and open the file for writing
+		nothing = "<p>--none--</p>" 
+
+		if overwriteFiles:
+			ef = open_to_overwrite(example_file_name)
+		else:	
+			ef = open_if_not_existing(example_file_name)
+
+		if ef:
+			icurl = []
+			if request['query_params']:
+				ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + "?" + request['query_params'] + " \\ \n"	
+			else:
+				ccurl1 = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA[curl -X ' + request['method'] + ' http://localhost:9000' + request['url'] + " \\ \n"
+			icurl.append(ccurl1)
+			
+			ccurl2 = ""	
+			if re.search('[a-z]',hdrs.reqAc):
+				ccurl2 = "\t -H 'Accept:%s' \\ \n" % hdrs.reqAc 
+				if re.search(r'abiquo',hdrs.reqAc):
+					if not re.search('version\=[0-9]\.[0-9]',hdrs.reqAc):
+						ccurl2 = "\t -H 'Accept:%s; version=%s' \\ \n" % (hdrs.reqAc,MTversion)
+				icurl.append(ccurl2)
+			ccurl3 = ""
+			ccurl4 = ""
+			if re.search('[a-z]',hdrs.reqCT):
+				pt = ""
+				ccurl3 = "\t -H 'Content-Type:%s' \\ \n" % hdrs.reqCT
+				if re.search(r'abiquo',hdrs.reqCT):
+					if not re.search('version\=[0-9]\.[0-9]',hdrs.reqCT): 
+						ccurl3 = "\t -H 'Content-Type:%s; version=%s' \\ \n" % (hdrs.reqCT,MTversion) 	
+				icurl.append(ccurl3)
+				pts = re.search('json|xml|text',hdrs.reqCT)
+				if pts.group(0): 
+					pt = pts.group(0)
+					ccurl4 = "\t -d @requestpayload.%s \\ \n" % pt
+				else:
+					ccurl4 = "\t -d @requestpayload \\ \n" 
+				icurl.append(ccurl4)
+
+			ccurl5 = '\t -u user:password --verbose ]]></ac:plain-text-body></ac:macro>'	
+			icurl.append(ccurl5)
+			exdict['ocurl'] = "".join(icurl)
+
+			exdict['ostatus'] = request['status'] # int
+
+			processed_request_payload = ""
+			processed_request_payload = format_payload(hdrs.reqCT,request['request_payload'])
+		
+			if processed_request_payload:
+				exdict['orequestData'] = processed_request_payload
+
+			if 	request['status'] != 204:
+				processed_response_payload = ""
+				processed_response_payload = format_payload(hdrs.rspCT,request['response_payload'])
+				if processed_response_payload:
+					exdict['oresponseData'] = processed_response_payload
+			else:
+				exdict['oresponseData'] = nothing
+#			mex = example(ofName,ocurl,ostatus,orequestData,oresponseData)
+			tfilepath = os.path.join(adminSubdir,template)
+			mustacheTemplate = open(tfilepath, 'r').read()
+			efo = pystache.render(mustacheTemplate, exdict).encode('utf-8')
+			ef.write(efo)
+			ef.close()	
+			return True	
+		else:					
+			logging.warning("File error: %s" % example_file_name)
+			return False
+
+
+def pretty_print_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles):
 #   request = yaml.load(line)
 	code_header = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA['
 	code_footer = ']]></ac:plain-text-body></ac:macro>'
@@ -256,7 +359,7 @@ def pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTve
 	if request['status'] < 400:
 	# write the request to a file, but if there are already queries from this run, append numbers to the files
 
-		ex_file_name_plus_dir = os.path.join(output_subdir,ex_file_name)
+		ex_file_name_plus_dir = os.path.join(subdir,ex_file_name)
 
 		# Append an X to the list... number of X-es = number of files created!
 		files_dictionary.setdefault(ex_file_name_plus_dir,[]).append("X")
@@ -369,8 +472,8 @@ def sub_media_type(mediatype):
 def main():
 	logging.basicConfig(filename='api_examples.log',level=logging.DEBUG)
 	MTversion = ""
-	(output_subdir,rawLog,MTversion,overwriteFiles) = get_properties_file()
-	#output_subdir = "test_files"	
+	(subdir,rawLog,MTversion,overwriteFiles,adminSubdir,template) = get_properties_file()
+	#subdir = "test_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links and mediatypes for filenames
 # Note that the word "license" should not be included in the abbreviation file
@@ -391,8 +494,9 @@ def main():
 			log_summary_line(line)
 			# The output directory must exist. If overwriteFiles is set, existing files will be overwritten
 			try:
-				pretty_print_line(output_subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles)	
-#			ex_file = open(os.path.join(output_subdir,ex_file_name), 'w')	
+				mustache_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles,adminSubdir,template)	
+#				pretty_print_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles)	
+#			ex_file = open(os.path.join(subdir,ex_file_name), 'w')	
 			except:
 				logging.warning("Could not write example file: %s " % ex_file_name)
 
