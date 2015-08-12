@@ -78,7 +78,7 @@ def get_page(wikAuth,wikLoc,pageTitle,server,ctoken):
 # returns the page
 	page = {}
 #	token = server.confluence2.login(wikAuth.user, wikAuth.password)
-	time.sleep(30)	
+	time.sleep(1)	
 	try:	
 		page = server.confluence2.getPage(ctoken, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
@@ -98,8 +98,9 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
 		pgcontent = ""
 		# copy page content
 		pgcontent = gotpage['content']
+		print ("pgcontent:  %s" % pgcontent)
 		# search for a filename on the page
-		filename_searchstring = r'abiheader</ac\:parameter><ac\:rich-text-body>' + pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt" + r'>'
+		filename_searchstring = r'abiheader</ac\:parameter>'+ "\s.*" + r'<ac\:rich-text-body>' + pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt" + r'<'
 		fnm = re.search(filename_searchstring,pgcontent)
 		origfile = pagetitle + ".0001.txt"
 		if fnm:
@@ -149,7 +150,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
    					else:
    						return_type = "invalid" 
 						return_value = pagepathfile   						
-   						logging.info("Page %s does not have a valid filename for some other reason" % pagetitle)
+   						logging.info("Page %s does not have a valid filename for some other reason than whitespace" % pagetitle)
    	else:
    		logging.info("Page %s could not be found" % pagetitle)
    		return_type = "new"
