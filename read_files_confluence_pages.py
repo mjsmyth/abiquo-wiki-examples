@@ -131,14 +131,14 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
 				return_type = "duplicate" 
 				return_value = dupfile
 			else:	
-				cs = r'abiheader</ac\:parameter><ac\:rich-text-body>' + '([\w,\.]+)' + r'<'
+				cs = r'abiheader</ac\:parameter><ac\:rich-text-body>' + '([\w,\.]+)' + r'>'
 				fncust = re.search(cs,pgcontent)
 				if fncust:
 					logging.info("The page %s exists and has a custom filename %s " % (pagetitle,fncust.group(1)))
 					return_type = "custom" 
 					return_value = fncust.group(1)
 				else:
-					ca = r'abiheader</ac\:parameter><ac\:rich-text-body>' + '([\w,\.,\s]+)' + r'<'
+					ca = r'abiheader</ac\:parameter><ac\:rich-text-body>' + '([\w,\.,\s]+)' + r'>'
 					fnca = re.search(ca,pgcontent)
 					if fnca:
 						logging.info("Page %s exists and has an invalid filename containing whitespace %s " % (pagetitle,fnca.group(1)))
@@ -149,7 +149,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
    					else:
    						return_type = "invalid" 
 						return_value = pagepathfile   						
-   						logging.info("Page %s found but filename contained invalid characters (other than whitespace)" % (pagetitle))
+   						logging.info("Page %s but filename was %s)" % (pagetitle,fnccust.group(0)))
    	else:
    		logging.info("Page %s could not be found" % pagetitle)
    		return_type = "new"
