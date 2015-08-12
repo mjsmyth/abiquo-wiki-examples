@@ -15,6 +15,7 @@ import os
 import logging
 from distutils.util import strtobool
 import collections
+import time
 
 class wikiAuth:
 	def __init__(self,auser,apassword):
@@ -76,7 +77,8 @@ def get_properties_file():
 def get_page(wikAuth,wikLoc,pageTitle,server,ctoken):
 # returns the page
 	page = {}
-#	token = server.confluence2.login(wikAuth.user, wikAuth.password)	
+#	token = server.confluence2.login(wikAuth.user, wikAuth.password)
+	time.sleep(1)	
 	try:	
 		page = server.confluence2.getPage(ctoken, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
@@ -97,7 +99,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
 		# copy page content
 		pgcontent = gotpage['content']
 		# search for a filename on the page
-		filename_searchstring = r'abiheader</ac\:parameter><ac\:rich-text-body>' + pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt" + r'<'
+		filename_searchstring = r'abiheader</ac\:parameter><ac\:rich-text-body>' + pagetitle + "\.([0-9][0-9][0-9][0-9])\.txt" + r'>'
 		fnm = re.search(filename_searchstring,pgcontent)
 		origfile = pagetitle + ".0001.txt"
 		if fnm:
@@ -201,7 +203,7 @@ def get_content_file_names(inputSubdir):
 
 def main():
 	logging.basicConfig(filename='read_files_pages.log',level=logging.DEBUG)
-	logging.info("****** Start of script ******")
+	logging.info("****** Start of read_files_confluence_pages.py script ******")
 	# load properties file with wiki properties
 	(loc,auth,server,inputSubdir,adminSubdir) = get_properties_file()
 
@@ -212,7 +214,8 @@ def main():
 	for af in admTextFiles:
 		caf = af + ".json.txt"
 		laf = os.path.join(adminSubdir,caf)
-		paf = caf + ".bkp"
+		paf = c
+		af + ".bkp"
 		naf = os.path.join(adminSubdir,paf)	
 		logging.info ("Found file: %s  and renamed to backup file: %s" % (laf,naf))
 		os.rename (laf,naf)
