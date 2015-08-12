@@ -149,7 +149,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
    					else:
    						return_type = "invalid" 
 						return_value = pagepathfile   						
-   						logging.info("Page %s but filename was %s)" % (pagetitle,fncust.group(0)))
+   						logging.info("Page %s does not have a valid filename for some other reason" % (pagetitle)
    	else:
    		logging.info("Page %s could not be found" % pagetitle)
    		return_type = "new"
