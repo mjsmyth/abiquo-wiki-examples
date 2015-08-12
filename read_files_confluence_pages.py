@@ -78,7 +78,7 @@ def get_page(wikAuth,wikLoc,pageTitle,server,ctoken):
 # returns the page
 	page = {}
 #	token = server.confluence2.login(wikAuth.user, wikAuth.password)
-	time.sleep(1)	
+	time.sleep(30)	
 	try:	
 		page = server.confluence2.getPage(ctoken, wikLoc.spaceKey, pageTitle)
 	except xmlrpclib.Fault as err:
@@ -149,7 +149,7 @@ def check_page_mod(wikAuth,wikLoc,pagetitle,pagepathfile,server,parentId,atoken)
    					else:
    						return_type = "invalid" 
 						return_value = pagepathfile   						
-   						logging.info("Page %s but filename was %s)" % (pagetitle,fnccust.group(0)))
+   						logging.info("Page %s but filename was %s)" % (pagetitle,fncust.group(0)))
    	else:
    		logging.info("Page %s could not be found" % pagetitle)
    		return_type = "new"
