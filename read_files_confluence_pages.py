@@ -214,8 +214,7 @@ def main():
 	for af in admTextFiles:
 		caf = af + ".json.txt"
 		laf = os.path.join(adminSubdir,caf)
-		paf = c
-		af + ".bkp"
+		paf = caf + ".bkp"
 		naf = os.path.join(adminSubdir,paf)	
 		logging.info ("Found file: %s  and renamed to backup file: %s" % (laf,naf))
 		os.rename (laf,naf)
