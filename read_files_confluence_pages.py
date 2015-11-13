@@ -215,9 +215,10 @@ def main():
 		caf = af + ".json.txt"
 		laf = os.path.join(adminSubdir,caf)
 		paf = caf + ".bkp"
-		naf = os.path.join(adminSubdir,paf)	
-		logging.info ("Found file: %s  and renamed to backup file: %s" % (laf,naf))
-		os.rename (laf,naf)
+		naf = os.path.join(adminSubdir,paf)
+		if os.path.isfile(laf): 
+			logging.info ("Found file: %s  and renamed to backup file: %s" % (laf,naf))
+			os.rename (laf,naf)
 
 	allFiles = {}
 	licFiles = {}
