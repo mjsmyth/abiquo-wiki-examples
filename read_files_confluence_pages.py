@@ -1,9 +1,8 @@
 #!/usr/bin/python
-# Read text from the first example file of each type and update or create wiki pages with the content
-# Read properties file with wiki credentials and details
-# Force option overwrites manually updated pages
-# Compatible with: Python 2.7
-# TODO: parameterise input files directory and mediatype version number
+#Get the 0001 files from the subdirectory specified in the options and check if a Confluence page already exists, 
+#and if so, check if it has been modified. This script creates these files: 
+# wiki_all_files.json.txt, wiki_update.json.txt and wiki_prohibited.json.txt as well as wiki_options_update.json.txt
+# You can edit any of these files to change which Confluence pages will be updated by the next script.
 import sys
 import json
 import string
