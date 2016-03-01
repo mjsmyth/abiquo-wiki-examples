@@ -10,6 +10,7 @@
 	"template": "example.mustache",
 	"MTversion" : "3.3",
 	"overwriteFiles" : "y",
+	"confluenceForcePageUpdate" : "n",
 	"rewriteAll" : "n",
 	"updateAll" : "n",
 	"original" : "y",

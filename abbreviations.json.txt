@@ -1,4 +1,6 @@
 {
+	"datastoretiers":"dstrtrs",
+	"datastoretier":"dstrtr",
 	"rdpa":"rdpa",
 	"cces":"cs",
 	"hypervisortype":"hvtype",
