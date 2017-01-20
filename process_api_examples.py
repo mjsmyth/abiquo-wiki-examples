@@ -461,7 +461,7 @@ def sub_media_type(mediatype):
 	if mediatype:
 		subbed_type = mediatype
 		subbed_type = re.sub("application/vnd\.abiquo\.","",subbed_type)
-		subbed_type = re.sub(';\s*?version\=[0-9]\.[0-9]',"",subbed_type)
+		subbed_type = re.sub(';\s*?version\=[0-9]\.[0-9]{1,2}',"",subbed_type)
 		subbed_type = re.sub("\+","_",subbed_type)	
 		subbed_type = re.sub("-","_",subbed_type)		
 	else:
