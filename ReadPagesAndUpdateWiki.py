@@ -1,27 +1,11 @@
-# Python script: getConfluencePageContent
+# Python script: ReadPagesAndUpdateWiki.py
 # ---------------------------------------
-# Friendly warning: This script is provided "as is" and without any guarantees.
-# I developed it to solve a specific problem.
-# I'm sharing it because I hope it will be useful to others too.
-# If you have any improvements to share, please let me know.
-#
-# Author: Sarah Maddox
-# Source: https://bitbucket.org/sarahmaddox/confluence-full-text-search
-# Usage guide: http://ffeathers.wordpress.com/2013/04/20/confluence-full-text-search-using-python-and-grep/
-#
-# A Python script that gets the content of all pages in a given Confluence space.
-# It puts the content of each page into a separate text file, in a given directory.
-# The content is in the form of the Confluence "storage format",
-# which is a type of XML consisting of HTML with Confluence-specific elements.
-#
+# I used Sarah Maddox's Confluence Full Text Search script as a base for the user input and Confluence calls
 # This script works with Python 3.2.3
 ###############
-# Script modified by MJ to:
 # - Get the content of child pages under APIExamples page
-# - Write a file with page details for each page
-# - Write page files
-#
-# - Try to update the wiki with the files
+# - Search for the standard filename in the child pages
+# - Update each page in the wiki with the content of the matching file
 
 
 import xmlrpc.client
@@ -31,6 +15,40 @@ import time
 import json
 import collections
 import glob
+from distutils.util import strtobool
+
+def proc_strbool(userInput):
+    try:
+        return strtobool(userInput.lower())
+    except ValueError:
+    	logging.warning('Invalid boolean property %s' % userInput)
+        sys.stdout.write('Invalid boolean property')
+
+def get_properties_file():
+	# Load properties for the scripts, including wiki properties that can't be stored in a public repo
+	properties = {}
+	with open("confluence_properties.json.txt") as pfile:
+		prop_file = pfile.read().replace('\n', '')	
+		prop_file = prop_file.replace('\t', " ")
+		properties = json.loads(prop_file)
+		for ick in (properties):
+			logging.info("Property: %s : %s " % (ick,properties[ick]))
+#		template = properties['template']	
+		adminSubdir = properties['adminSubdir']
+		subdir = properties['subdir']
+#		rawLog = properties['rawLog']
+		MTversion = str(properties['MTversion'])
+#		owFiles = properties['overwriteFiles']
+#		overwriteFiles = proc_strbool(owFiles)
+		owPages = properties['writeWikiPages']
+		writeWikiPages = proc_strbool(owPages)
+		wikiUrl = properties['wikiUrl']
+		spaceKey = properties['spaceKey']
+		parentTitle =  properties['parentTitle'] 
+		user = properties['user']
+		password = properties['password']
+		return (adminSubdir,subdir,MTversion,wikiUrl,spaceKey,parentTitle,user,password,writeWikiPages)
+
 
 def tree(): return collections.defaultdict(tree)
 
@@ -121,7 +139,7 @@ def get_old_style_name(filename):
 
 def get_page_content(pages_list,server,mtoken,parentId,spacekey,page_details):
 
-	# For each page, get the content of the page, get the filename, and write the content and details out to a file
+	# For each page, get the content of the page, get the filename, and store the content and details in a giant json
 	for page in pages_list:
 		# Get the content of the page
 		page_content = {}
@@ -171,6 +189,7 @@ def get_page_content(pages_list,server,mtoken,parentId,spacekey,page_details):
 	return page_details
 
 def get_file_content(allFiles,licFiles,server,mtoken,parentId,spacekey,page_details,input_path):
+	# For each file, check if there is an existing page or if not, create a page also in the big dictionary
 	valid_rest_options = ['GET','DELETE','OPTIONS','PUT','POST','PATCH']
 	for afile,afilename in allFiles.items():
 		if afile not in licFiles:
@@ -187,7 +206,7 @@ def get_file_content(allFiles,licFiles,server,mtoken,parentId,spacekey,page_deta
 						page_details[afile]["updated"] = "updatedPage"						
 
 					else: 
-						print ("Existing file not updated: " + page_details[afile]["filename"])										
+						print ("Existing page not updated: " + page_details[afile]["filename"])										
 				else:
 					pagenew = {}
 						# page_details[afilename] = {}
@@ -206,41 +225,41 @@ def get_file_content(allFiles,licFiles,server,mtoken,parentId,spacekey,page_deta
 					page_details[afile]["oldpagename"] = afile[:]
 	return page_details
 
-def main():
-	# Get from input: Confluence URL, username, password, space key, output directory
 
-	print("G'day! I'm the getConfluencePageContent script.\nGive me a Confluence space, and I'll give you the content of all its pages.\n")
-	site_URL = input("Confluence site URL (exclude final slash): ")
-	username = input("Username: ")
-	pwd = input("Password: ")
-	spacekey = input("Space key: ")
-	output_directory = input("Output directory (relative to current, exclude initial slash, example 'output'): ")
+def main():
+# Read the properties file
+	(adminSubdir,subdir,MTversion,site_URL,spacekey,parentTitle,username,pwd,writeWikiPages) = get_properties_file()
+# Interactive version: Get from input: Confluence URL, username, password, space key, output directory
+#	print("G'day! This script will read Confluence pages, search for filenames in the pages, and update the pages with new file content.\n")
+#	site_URL = input("Confluence site URL (exclude final slash): ")
+#	username = input("Username: ")
+#	pwd = input("Password: ")
+#	spacekey = input("Space key: ")
+#	output_directory = input("Output directory (relative to current, exclude initial slash, example 'output'): ")
 
 	test = False
-	if test == True:
+	if test == False:
+		input_path = subdir[:]
+#		parentTitle = "APIExamples"
+		owfname = "v" + MTversion + "_updatedEx.txt"		
+		ojfname = "v" + MTversion + "_jsonEx.json"
+		ofcname = "v" + MTversion + "_confirmWikiUpd.txt"
+	else:	
 		input_path = "./v4files"
 		parentTitle = "APIExamplesTest"
-		ofname = "ztest.txt"
+		owfname = "ztest.txt"
 		ojfname = "ztest.json.txt"
-		ofname2 = "ztestUpdated.txt"
-		ofname3 = "zjfiles.txt"
-	else:	
-		input_path = "./v310newfiles"
-		parentTitle = "APIExamples"
-		ofname = "zNewUpdateWikiExamples.txt"		
-		ojfname = "zNewUpdateWikiExamples.json.txt"
-		ofname2 = "zNewUpdatedinWiki.txt"
-		ofname3 = "zNewJFiles.txt"
+		ofcname = "ztestUpdated.txt"
+
 
 	# Create the output directory
 	# os.mkdir("../output")
-	output_path = "../" + output_directory
-	os.mkdir(output_path)
+#	output_path = "../" + output_directory
+#	os.mkdir(output_path)
 
 	# Log in to Confluence
 	server = xmlrpc.client.ServerProxy(site_URL + "/rpc/xmlrpc")
 	mtoken = server.confluence2.login(username, pwd)
-
 
 
 	# retrieve the parent page where the pages will be stored and get its ID
@@ -249,31 +268,29 @@ def main():
 	if parentPage:
 		parentId = parentPage['id']
 
-	# Get all child pages
+	# Get all child pages (this is a page summary)
 	pages_list = server.confluence2.getChildren(mtoken, parentId)
 
-	# Get all the pages in the space
-	#pages_list = server.confluence2.getPages(token, spacekey)
-
-
-
+	# Define multilevel dictionary for pages
 	page_details = tree()
 
+	# Update big dictionary with all the existing pages and page content (ahem!)
 	page_details = get_page_content(pages_list,server,mtoken,parentId,spacekey,page_details)
 
-
-	# retrieve the names of all the 0001 files 
+	# retrieve the names of all the 0001 files from the file system 
 	# and also the license files to add to the prohibited list
 	(allFiles,licFiles) = get_content_file_names(input_path)
 	
-
+	# Update big dictionary with content from files and also new pages
 	page_details = get_file_content(allFiles,licFiles,server,mtoken,parentId,spacekey,page_details,input_path)
 
-	print("All done! I've put the results in this directory: ", output_directory)
-	write_json_file(ojfname,page_details,"./")
+	# Write a giant json file with all the content
+	print("Writing giant json file: " + str(os.path.join(adminSubdir,ofname)))
+	write_json_file(ojfname,page_details,adminSubdir)
 
+	# Write a wiki file with info about what is going on
 	heading = "|| Page name || Updated || Filename || Page ID || Page URL ||\n"
-	output_file = open(os.path.join("./",ofname), "w+")
+	output_file = open(os.path.join(adminSubdir,owfname), "w+")
 
 	output_file.write(heading)
 	for apiex,apiexentry in page_details.items():
@@ -287,48 +304,54 @@ def main():
 	output_file.close()	
 
 
-	output_file2 = open(os.path.join("./",ofname2), "w+")
+	output_file2 = open(os.path.join(adminSubdir,ofcname), "w+")
 	heading2 = "|| Page_name  ||  Filename  ||\n"
 	output_file2.write(heading2)
-	output_file3 = open(os.path.join("./",ofname3), "w+")
+#	output_file3 = open(os.path.join("./",ofname3), "w+")
+
 
 	pUpdateOptions = {}
 	updatedPages = []
 	for ae,apiexent in page_details.items():
+		# Check we didn't already update this page (to work around capital letter filter examples)
 		if apiexent["filename"].lower() not in updatedPages:
 			draft_page = {}
 			towrite2 = ""
 			draft_page = apiexent["page_info"].copy()
 			if apiexent["updated"] == "existingPage":
-#				toWrite2 = "| " + apiexent["page_info"]["title"] + " | " + apiexent["updated"] + " | " + apiexent["filename"] + " | " + apiexent["page_info"]["id"] + " | " + apiexent["page_info"]["url"] + "| \n"
-				if "j0" in apiexent["page_info"]["title"]:
-					j0stuff = apiexent["page_info"]["title"] + "\n"	
-					output_file3.write(j0stuff)
+				toWrite2 = "| " + apiexent["page_info"]["title"] + " | " + apiexent["updated"] + " | " + apiexent["filename"] + " | " + apiexent["page_info"]["id"] + " | " + apiexent["page_info"]["url"] + "| \n"
+#			Check for pages with mediatype bug
+#				if "j0" in apiexent["page_info"]["title"]:
+#					j0stuff = apiexent["page_info"]["title"] + "\n"	
+#					output_file3.write(j0stuff)
 			if apiexent["updated"] == "newPage":
 				toWrite2 = "| " + apiexent["page_info"]["title"] + " | " + apiexent["updated"] + " | " + apiexent["filename"] + " |  |  | \n"
 				print("Creating wiki page: " + apiexent["page_info"]["title"])
-				# try:
-				# 	time.sleep(1)
-				# 	server.confluence2.storePage(mtoken, draft_page)
-				# 	updatedPages.append(apiexent["filename"].lower())
-				# 	output_file2.write(toWrite2)
-				# except:
-				# 	print("Failed to create page: "+ apiexent["filename"] )	
+				if writeWikiPages:
+					try:
+						time.sleep(1)
+						server.confluence2.storePage(mtoken, draft_page)
+						updatedPages.append(apiexent["filename"].lower())
+						output_file2.write(toWrite2)
+					except:
+						print("Failed to create page: "+ apiexent["filename"] )	
+
 			if apiexent["updated"] == "updatedPage":
 				toWrite2 = "| " + apiexent["page_info"]["title"] + " | " + apiexent["updated"] + " | " + apiexent["filename"] + " | " + apiexent["page_info"]["id"] + " | " + apiexent["page_info"]["url"] + "| \n"
-				pUpdateOptions["versionComment"] = "3.10 script " + apiexent["filename"][:]
+				pUpdateOptions["versionComment"] =  "v" + MTversion +"script: " + apiexent["filename"][:]
 				pUpdateOptions["minorEdit"] = False
-				print("Updating the wiki with page: " + apiexent["page_info"]["title"])				
-				# try:
-				# 	time.sleep(1)
-				# 	server.confluence2.updatePage(mtoken, draft_page, pUpdateOptions)
-				# 	updatedPages.append(apiexent["filename"].lower())
-				# 	output_file2.write(toWrite2)
-				# except:
-				# 	print("Failed to update page: "+ apiexent["filename"] )	
+				print("Updating the wiki with page: " + apiexent["page_info"]["title"])	
+				if writeWikiPages:			
+					try:
+						time.sleep(1)
+						server.confluence2.updatePage(mtoken, draft_page, pUpdateOptions)
+						updatedPages.append(apiexent["filename"].lower())
+						output_file2.write(toWrite2)
+					except:
+						print("Failed to update page: "+ apiexent["filename"] )	
 
 	output_file2.close()	
-	output_file3.close()
+#	output_file3.close()
 
 # Calls the main() function
 if __name__ == '__main__':
