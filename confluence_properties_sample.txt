@@ -10,14 +10,5 @@
 	"template": "example.mustache",
 	"MTversion" : "3.3",
 	"overwriteFiles" : "y",
-	"confluenceForcePageUpdate" : "n",
-	"rewriteAll" : "n",
-	"updateAll" : "n",
-	"original" : "y",
-	"modifier" : "n", 
-	"alternative" : "y",
-	"duplicate" : "n",
-	"custom" : "y",
-	"invalid" : "n",
-	"new": "y"
+	"writeWikiPages" : "y"
 }
