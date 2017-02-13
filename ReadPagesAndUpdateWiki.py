@@ -17,12 +17,32 @@ import collections
 import glob
 from distutils.util import strtobool
 
+def storeConfluencePage(server,mtoken,draft_page):
+	pgstatus = True
+	try:
+		time.sleep(1)
+		server.confluence2.storePage(mtoken, draft_page)
+	except:
+		pgstatus = False
+	return (pgstatus)	
+
+def updateConfluencePage(server,mtoken,draft_page,pUpdateOptions):
+	pgstatus = True
+	try:
+		time.sleep(1)
+		server.confluence2.updatePage(mtoken, draft_page, pUpdateOptions)
+	except:
+		pgstatus = False	
+	return (pgstatus)	
+
+
 def proc_strbool(userInput):
-    try:
-        return strtobool(userInput.lower())
-    except ValueError:
-    	logging.warning('Invalid boolean property %s' % userInput)
-        sys.stdout.write('Invalid boolean property')
+	try:
+		return strtobool(userInput.lower())
+	except ValueError:
+		print("Invalid boolean property: " + userInput)
+#		logging.warning('Invalid boolean property %s' % userInput)
+#		sys.stdout.write('Invalid boolean property')
 
 def get_properties_file():
 	# Load properties for the scripts, including wiki properties that can't be stored in a public repo
@@ -31,8 +51,8 @@ def get_properties_file():
 		prop_file = pfile.read().replace('\n', '')	
 		prop_file = prop_file.replace('\t', " ")
 		properties = json.loads(prop_file)
-		for ick in (properties):
-			logging.info("Property: %s : %s " % (ick,properties[ick]))
+#		for ick in (properties):
+#			logging.info("Property: %s : %s " % (ick,properties[ick]))
 #		template = properties['template']	
 		adminSubdir = properties['adminSubdir']
 		subdir = properties['subdir']
@@ -129,7 +149,7 @@ def remove_spans(pgcontent):
 	return noendspan
 
 def get_old_style_name(filename):
-	print ("Filename: " + filename)
+#	print ("Filename: " + filename)
 	oldname = filename.split(".")
 	if oldname:
 		oname = oldname[0]
@@ -173,6 +193,7 @@ def get_page_content(pages_list,server,mtoken,parentId,spacekey,page_details):
 		# no_span_content = remove_spans(safe_content) 
 
 		no_span_wiki_content = remove_spans(page_content_unsafe)
+
 		filename = search_for_filename(no_span_wiki_content)
 		
 		oname = get_old_style_name(filename)
@@ -237,7 +258,7 @@ def main():
 #	spacekey = input("Space key: ")
 #	output_directory = input("Output directory (relative to current, exclude initial slash, example 'output'): ")
 
-	test = False
+	test = True
 	if test == False:
 		input_path = subdir[:]
 #		parentTitle = "APIExamples"
@@ -285,7 +306,7 @@ def main():
 	page_details = get_file_content(allFiles,licFiles,server,mtoken,parentId,spacekey,page_details,input_path)
 
 	# Write a giant json file with all the content
-	print("Writing giant json file: " + str(os.path.join(adminSubdir,ofname)))
+	print("Writing giant json file: " + str(os.path.join(adminSubdir,ojfname)))
 	write_json_file(ojfname,page_details,adminSubdir)
 
 	# Write a wiki file with info about what is going on
@@ -312,7 +333,9 @@ def main():
 
 	pUpdateOptions = {}
 	updatedPages = []
+
 	for ae,apiexent in page_details.items():
+
 		# Check we didn't already update this page (to work around capital letter filter examples)
 		if apiexent["filename"].lower() not in updatedPages:
 			draft_page = {}
@@ -328,12 +351,12 @@ def main():
 				toWrite2 = "| " + apiexent["page_info"]["title"] + " | " + apiexent["updated"] + " | " + apiexent["filename"] + " |  |  | \n"
 				print("Creating wiki page: " + apiexent["page_info"]["title"])
 				if writeWikiPages:
-					try:
-						time.sleep(1)
-						server.confluence2.storePage(mtoken, draft_page)
+					createstatus =	storeConfluencePage(server,mtoken,draft_page)
+					print (createstatus)
+					if createstatus == True:
 						updatedPages.append(apiexent["filename"].lower())
 						output_file2.write(toWrite2)
-					except:
+					else:
 						print("Failed to create page: "+ apiexent["filename"] )	
 
 			if apiexent["updated"] == "updatedPage":
@@ -341,14 +364,15 @@ def main():
 				pUpdateOptions["versionComment"] =  "v" + MTversion +"script: " + apiexent["filename"][:]
 				pUpdateOptions["minorEdit"] = False
 				print("Updating the wiki with page: " + apiexent["page_info"]["title"])	
-				if writeWikiPages:			
-					try:
-						time.sleep(1)
-						server.confluence2.updatePage(mtoken, draft_page, pUpdateOptions)
+				if writeWikiPages:	
+					updatestatus = updateConfluencePage(server,mtoken,draft_page,pUpdateOptions)		
+					print(updatestatus)
+					if updatestatus == True:
 						updatedPages.append(apiexent["filename"].lower())
 						output_file2.write(toWrite2)
-					except:
+					else:
 						print("Failed to update page: "+ apiexent["filename"] )	
+
 
 	output_file2.close()	
 #	output_file3.close()
