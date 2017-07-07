@@ -49,6 +49,7 @@ There are two scripts: `process_api_examples.py`and `ReadAndUpdateConfluencePage
  * Read the wiki pages and check for filenames, store in the dictionary
  * Read the 0001 files and store in the dictionary (overwrite existing wiki files)
  * Create and update pages  
+ * Note there is a "test" parameter that you can set to run a test on a test wiki that will create different output files 
 
 ### General Properties
 
