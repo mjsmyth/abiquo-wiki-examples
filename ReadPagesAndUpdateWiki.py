@@ -258,7 +258,7 @@ def main():
 #	spacekey = input("Space key: ")
 #	output_directory = input("Output directory (relative to current, exclude initial slash, example 'output'): ")
 
-	test = True
+	test = False 
 	if test == False:
 		input_path = subdir[:]
 #		parentTitle = "APIExamples"
