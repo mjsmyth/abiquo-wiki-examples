@@ -44,7 +44,8 @@ There are two scripts: `process_api_examples.py`and `ReadAndUpdateConfluencePage
 * Later in Confluence you replace examples with a different number. And you can rename the pages to match the API methods. However, you must keep a filename in the abiheader div, with a REST option (GET, etc) at the front, the example file number, and with a .txt extension. e.g. file name `DELETE_adm_dcs_X.0002.txt` 
 * The example pages are designed to be manually included in wiki API reference docs. It is possible to search or retrieve page content (using the scripts written by Sarah Maddox, for example) and grep for included page names.
 
-### ReadAndUpdateConfluencePages.py
+### ReadPagesAndUpdateWiki.py
+ * Run with Python 3
  * Read the wiki pages and check for filenames, store in the dictionary
  * Read the 0001 files and store in the dictionary (overwrite existing wiki files)
  * Create and update pages  
@@ -62,9 +63,10 @@ There are two scripts: `process_api_examples.py`and `ReadAndUpdateConfluencePage
 |subdir | apiexamples | Directory under the project directory where example files are stored |
 |adminSubdir | admin | Directory under the project directory where admin files are stored |
 |template | template.mustache | Mustache template for creating Confluence wiki page or what 
-|overwriteFiles | y | Overwrite existing example files in the subdir |
-|updatePages| y | Update wiki pages |
 |MTversion | 3.2 | Default media type version for the API, which is the current product version |
+|overwriteFiles | y | Overwrite existing example files in the subdir |
+|writeWikiPages| y | Update wiki pages |
+
 
 ### Results files
 The script creates two output files:
