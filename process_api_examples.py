@@ -53,6 +53,7 @@ def print_line(line):
 	print "Response payload: %s" % request['response_payload']  # A JSON or an XML, inspect response Content-Type header
 
 
+
 def open_if_not_existing(filenam):
 	try:
 		fd = os.open(filenam, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -71,20 +72,21 @@ def open_to_overwrite(fna):
 		return None
 	
 
-def proc_strbool(userInput):
-    try:
-        return strtobool(userInput.lower())
-    except ValueError:
-    	logging.warning('Invalid boolean property %s' % userInput)
-        sys.stdout.write('Invalid boolean property')
+# def proc_strbool(userInput):
+#     try:
+#         return strtobool(userInput.lower())
+#     except ValueError:
+#     	logging.warning('Invalid boolean property %s' % userInput)
+#         sys.stdout.write('Invalid boolean property')
 
 
 def get_properties_file():
 	# Load properties for the scripts, including wiki properties that can't be stored in a public repo
 	properties = {}
 	with open("confluence_properties.json.txt") as pfile:
-		prop_file = pfile.read().replace('\n', '')	
-		prop_file = prop_file.replace('\t', " ")
+		prop_file = pfile.read().replace('\n','')	
+		prop_file = prop_file.replace('\t'," ")
+		print ("prop_file %s " % prop_file)
 		properties = json.loads(prop_file)
 		for ick in (properties):
 			logging.info("Property: %s : %s " % (ick,properties[ick]))
@@ -93,9 +95,8 @@ def get_properties_file():
 		subdir = properties['subdir']
 		rawLog = properties['rawLog']
 		MTversion = properties['MTversion']
-		owFiles = properties['overwriteFiles']
-		overwriteFiles = proc_strbool(owFiles)
-		return (subdir,rawLog,MTversion,overwriteFiles,adminSubdir,template)
+		# previously used strtobool for overwritefiles, now just automatically overwrites files
+		return (subdir,rawLog,MTversion,adminSubdir,template)
 
 
 def create_file_name(line,abbreviations,hdrs):
@@ -258,7 +259,7 @@ def format_payload(headerct,payld):
 		return emptypayload		
 
 
-def mustache_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles,adminSubdir,template):
+def mustache_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,adminSubdir,template):
 #   request = yaml.load(line)
 	request = json.loads(line)
 	exdict = {}
@@ -282,10 +283,10 @@ def mustache_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overw
 		# Check that it doesn't already exist and open the file for writing
 		nothing = "<p>--none--</p>" 
 
-		if overwriteFiles:
-			ef = open_to_overwrite(example_file_name)
-		else:	
-			ef = open_if_not_existing(example_file_name)
+#		if overwriteFiles:
+		ef = open_to_overwrite(example_file_name)
+#		else:	
+#			ef = open_if_not_existing(example_file_name)
 
 		if ef:
 			icurl = []
@@ -350,7 +351,7 @@ def mustache_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overw
 			return False
 
 
-def pretty_print_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles):
+def pretty_print_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion):
 #   request = yaml.load(line)
 	code_header = '<ac:macro ac:name="code"><ac:plain-text-body><![CDATA['
 	code_footer = ']]></ac:plain-text-body></ac:macro>'
@@ -370,10 +371,11 @@ def pretty_print_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,o
 		abiheader_file_name = ex_file_name + "." + "{0:04d}".format(number_of_files) + ".txt"
 		# Check that it doesn't already exist and open the file for writing
 		nothing = "<p>--none--</p>" 
-		if overwriteFiles:
-			ef = open_to_overwrite(example_file_name)
-		else:	
-			ef = open_if_not_existing(example_file_name)
+#		if overwriteFiles:
+		ef = open_to_overwrite(example_file_name)
+
+#		else:	
+#			ef = open_if_not_existing(example_file_name)
 
 		if ef:
 			abiheader = '<ac:macro ac:name="div"><ac:parameter ac:name="class">abiheader</ac:parameter><ac:rich-text-body>' + abiheader_file_name + '</ac:rich-text-body></ac:macro>'
@@ -472,7 +474,7 @@ def sub_media_type(mediatype):
 def main():
 	logging.basicConfig(filename='api_examples.log',level=logging.DEBUG)
 	MTversion = ""
-	(subdir,rawLog,MTversion,overwriteFiles,adminSubdir,template) = get_properties_file()
+	(subdir,rawLog,MTversion,adminSubdir,template) = get_properties_file()
 	#subdir = "test_files"	
 	files_dictionary = {}
 # Load a bunch of abbreviations to replace text and shorten links and mediatypes for filenames
@@ -494,7 +496,7 @@ def main():
 			log_summary_line(line)
 			# The output directory must exist. If overwriteFiles is set, existing files will be overwritten
 			try:
-				mustache_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles,adminSubdir,template)	
+				mustache_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,adminSubdir,template)	
 #				pretty_print_line(subdir,ex_file_name,line,hdrs,files_dictionary,MTversion,overwriteFiles)	
 #			ex_file = open(os.path.join(subdir,ex_file_name), 'w')	
 			except:
