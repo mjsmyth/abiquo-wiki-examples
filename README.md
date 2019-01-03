@@ -9,10 +9,10 @@ Many thanks to the Abiquo Development team for modifying the integration tests t
 The `update_confluence_pages.py` script is based on a blog entry by Matt Ryall called "Adding a page to Confluence with Python" from 29 June 2008. Many thanks also to Stack Overflow!
 
 ## Prerequisites
-* These scripts were run using Python 2.7.9 and 3.4.x against Confluence 4.3.2
+* These scripts were run originally using Python 2.7.9 and 3.4.x against Confluence 4.3.2 with the SOAP/RPC API and later against Confluence 6.x with the REST API 
 * These scripts require Confluence API access to be enabled
 * You should create a separate Confluence user for running these scripts
-* You should create a separate Confluence wiki space with a suitable parent page (with no spaces in the name) to hold the example pages. 
+* You should create a separate Confluence wiki space with a suitable parent page (with no spaces in the name) to hold the example pages, at least when testing
 * Each example is created in a separate file and page using a mustache template, so you can customise this template file
 * When you have checked your results, you can copy the pages to your documentation wiki or do whatever else you like with them. For example, we have "manually" included the pages in our API reference documentation
 
